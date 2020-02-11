@@ -84,6 +84,9 @@
             <f:checkbox checked="${instance.quoteValue}"/>
           </f:entry>
 
+
+  <f:advanced>
+
       <f:section title="Choose Source for Value">
           <f:radioBlock name="propertySource" title="Value" value="0" checked="${parameterType eq 'basic' and empty instance.propertyFile and not empty instance.value}">
               <f:entry title="Value" field="propertyValue">
@@ -218,5 +221,6 @@
               </f:advanced>
           </f:radioBlock>
       </f:section>
+  </f:advanced>
 
 </j:jelly>
