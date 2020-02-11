@@ -127,242 +127,48 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
             return DescriptorVisibilityFilter.apply(this, ChoiceListProvider.all());
         }
 
-        public FormValidation doCheckPropertyFile(@QueryParameter final String propertyFile, @QueryParameter final String propertyKey, @QueryParameter final String type) throws IOException, ServletException {
-            if (StringUtils.isBlank(propertyFile)) {
-                return FormValidation.ok();
-            }
-
-            Project project = new Project();
-            Property property = new Property();
-            property.setProject(project);
-
-            File prop = new File(propertyFile);
-            try {
-                if (prop.exists()) {
-                    property.setFile(prop);
-                } else {
-                    URL propertyFileUrl = new URL(propertyFile);
-                    property.setUrl(propertyFileUrl);
-                }
-                property.execute();
-            } catch (MalformedURLException e) {
-                return FormValidation.warning(Messages.ExtendedChoiceParameterDefinition_PropertyFileDoesntExist(), propertyFile);
-            } catch (BuildException e) {
-                return FormValidation.warning(Messages.ExtendedChoiceParameterDefinition_PropertyFileDoesntExist(), propertyFile);
-            }
-
-            if (PARAMETER_TYPE_MULTI_LEVEL_SINGLE_SELECT.equals(type) || PARAMETER_TYPE_MULTI_LEVEL_MULTI_SELECT.equals(type)) {
-                return FormValidation.ok();
-            } else if (StringUtils.isNotBlank(propertyKey)) {
-                if (project.getProperty(propertyKey) != null) {
-                    return FormValidation.ok();
-                } else {
-                    return FormValidation.warning(Messages.ExtendedChoiceParameterDefinition_PropertyFileExistsButProvidedKeyIsInvalid(), propertyFile, propertyKey);
-                }
-            } else {
-                return FormValidation.warning(Messages.ExtendedChoiceParameterDefinition_PropertyFileExistsButNoProvidedKey(), propertyFile);
-            }
-        }
-
-        public FormValidation doCheckPropertyKey(@QueryParameter final String propertyFile, @QueryParameter final String propertyKey, @QueryParameter final String type) throws IOException, ServletException {
-            return doCheckPropertyFile(propertyFile, propertyKey, type);
-        }
-
-        public FormValidation doCheckDefaultPropertyFile(@QueryParameter final String defaultPropertyFile, @QueryParameter final String defaultPropertyKey, @QueryParameter final String type) throws IOException, ServletException {
-            return doCheckPropertyFile(defaultPropertyFile, defaultPropertyKey, type);
-        }
-
-        public FormValidation doCheckDefaultPropertyKey(@QueryParameter final String defaultPropertyFile, @QueryParameter final String defaultPropertyKey, @QueryParameter final String type) throws IOException, ServletException {
-            return doCheckPropertyFile(defaultPropertyFile, defaultPropertyKey, type);
-        }
-
         @Override
         public ExtendedChoiceParameterDefinition newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-            String name = null;
-            String type = null;
-            String description = null;
-            String multiSelectDelimiter = null;
-            boolean quoteValue = false;
-            boolean saveJSONParameterToFile = false;
-            int visibleItemCount = 5;
+             ExtendedChoiceParameterDefinition def = new ExtendedChoiceParameterDefinition(
+                    formData.getString("name"),
+                    bindJSONWithDescriptor(req, formData, "choiceListProvider", ChoiceListProvider.class),
+                    formData.getString("description")
+            );
 
-            String propertyValue = null;
-            String propertyKey = null;
-            String propertyFile = null;
-            String groovyScript = null;
-            String groovyScriptFile = null;
-            String bindings = null;
-            String groovyClasspath = null;
-            String javascriptFile = null;
-            String javascript = null;
-
-            String defaultPropertyValue = null;
-            String defaultPropertyKey = null;
-            String defaultPropertyFile = null;
-            String defaultGroovyScript = null;
-            String defaultGroovyScriptFile = null;
-            String defaultBindings = null;
-            String defaultGroovyClasspath = null;
-
-            String descriptionPropertyValue = null;
-            String descriptionPropertyKey = null;
-            String descriptionPropertyFile = null;
-            String descriptionGroovyScript = null;
-            String descriptionGroovyScriptFile = null;
-            String descriptionBindings = null;
-            String descriptionGroovyClasspath = null;
-            String projectName = null;
-            name = formData.getString("name");
-            description = formData.getString("description");
-
-            AbstractProject<?, ?> project = Stapler.getCurrentRequest().findAncestorObject(AbstractProject.class);
-            if (project != null) {
-                projectName = project.getName();
-            }
-
-            JSONObject parameterGroup = formData.getJSONObject("parameterGroup");
-            if (parameterGroup != null) {
-                int value = parameterGroup.getInt("value");
-                if (value == 0) {
-                    type = parameterGroup.getString("type");
-                    quoteValue = parameterGroup.getBoolean("quoteValue");
-                    visibleItemCount = parameterGroup.optInt("visibleItemCount", 5);
-                    multiSelectDelimiter = parameterGroup.getString("multiSelectDelimiter");
-                    if (StringUtils.isEmpty(multiSelectDelimiter)) {
-                        multiSelectDelimiter = ",";
-                    }
-
-                    JSONObject propertySourceJSON = (JSONObject) parameterGroup.get("propertySource");
-                    if (propertySourceJSON != null) {
-                        if (propertySourceJSON.getInt("value") == 0) {
-                            propertyValue = propertySourceJSON.getString("propertyValue");
-                        } else if (propertySourceJSON.getInt("value") == 1) {
-                            propertyFile = propertySourceJSON.getString("propertyFile");
-                            propertyKey = propertySourceJSON.getString("propertyKey");
-                        } else if (propertySourceJSON.getInt("value") == 2) {
-                            groovyScript = propertySourceJSON.getString("groovyScript");
-                            bindings = propertySourceJSON.getString("bindings");
-                            groovyClasspath = propertySourceJSON.getString("groovyClasspath");
-                        } else if (propertySourceJSON.getInt("value") == 3) {
-                            groovyScriptFile = propertySourceJSON.getString("groovyScriptFile");
-                            bindings = propertySourceJSON.getString("bindings");
-                            groovyClasspath = propertySourceJSON.getString("groovyClasspath");
-                        }
-                    }
-
-                    JSONObject defaultPropertySourceJSON = (JSONObject) parameterGroup.get("defaultPropertySource");
-                    if (defaultPropertySourceJSON != null) {
-                        if (defaultPropertySourceJSON.getInt("value") == 0) {
-                            defaultPropertyValue = defaultPropertySourceJSON.getString("defaultPropertyValue");
-                        } else if (defaultPropertySourceJSON.getInt("value") == 1) {
-                            defaultPropertyFile = defaultPropertySourceJSON.getString("defaultPropertyFile");
-                            defaultPropertyKey = defaultPropertySourceJSON.getString("defaultPropertyKey");
-                        } else if (defaultPropertySourceJSON.getInt("value") == 2) {
-                            defaultGroovyScript = defaultPropertySourceJSON.getString("defaultGroovyScript");
-                            defaultBindings = defaultPropertySourceJSON.getString("defaultBindings");
-                            defaultGroovyClasspath = defaultPropertySourceJSON.getString("defaultGroovyClasspath");
-                        } else if (defaultPropertySourceJSON.getInt("value") == 3) {
-                            defaultGroovyScriptFile = defaultPropertySourceJSON.getString("defaultGroovyScriptFile");
-                            defaultBindings = defaultPropertySourceJSON.getString("defaultBindings");
-                            defaultGroovyClasspath = defaultPropertySourceJSON.getString("defaultGroovyClasspath");
-                        }
-                    }
-
-                    JSONObject descriptionPropertySourceJSON = (JSONObject) parameterGroup.get("descriptionPropertySource");
-                    if (descriptionPropertySourceJSON != null) {
-                        if (descriptionPropertySourceJSON.getInt("value") == 0) {
-                            descriptionPropertyValue = descriptionPropertySourceJSON.getString("descriptionPropertyValue");
-                        } else if (descriptionPropertySourceJSON.getInt("value") == 1) {
-                            descriptionPropertyFile = descriptionPropertySourceJSON.getString("descriptionPropertyFile");
-                            descriptionPropertyKey = descriptionPropertySourceJSON.getString("descriptionPropertyKey");
-                        } else if (descriptionPropertySourceJSON.getInt("value") == 2) {
-                            descriptionGroovyScript = descriptionPropertySourceJSON.getString("descriptionGroovyScript");
-                            descriptionBindings = descriptionPropertySourceJSON.getString("descriptionBindings");
-                            descriptionGroovyClasspath = descriptionPropertySourceJSON.getString("descriptionGroovyClasspath");
-                        } else if (descriptionPropertySourceJSON.getInt("value") == 3) {
-                            descriptionGroovyScriptFile = descriptionPropertySourceJSON.getString("descriptionGroovyScriptFile");
-                            descriptionBindings = descriptionPropertySourceJSON.getString("descriptionBindings");
-                            descriptionGroovyClasspath = descriptionPropertySourceJSON.getString("descriptionGroovyClasspath");
-                        }
-                    }
-                } else if (value == 1) {
-                    type = parameterGroup.getString("type");
-                    propertyFile = parameterGroup.getString("propertyFile");
-                    propertyValue = parameterGroup.optString("propertyValue");
-                } else if (value == 2) {
-                    type = PARAMETER_TYPE_JSON;
-                    JSONObject jsonParameterConfigSourceJSON = (JSONObject) parameterGroup.get("jsonParameterConfigSource");
-                    if (jsonParameterConfigSourceJSON != null) {
-                        if (jsonParameterConfigSourceJSON.getInt("value") == 0) {
-                            groovyScript = jsonParameterConfigSourceJSON.getString("groovyScript");
-                            groovyScriptFile = null;
-                            bindings = jsonParameterConfigSourceJSON.getString("bindings");
-                            groovyClasspath = jsonParameterConfigSourceJSON.getString("groovyClasspath");
-                        } else if (jsonParameterConfigSourceJSON.getInt("value") == 1) {
-                            groovyScript = null;
-                            groovyScriptFile = jsonParameterConfigSourceJSON.getString("groovyScriptFile");
-                            bindings = jsonParameterConfigSourceJSON.getString("bindings");
-                            groovyClasspath = jsonParameterConfigSourceJSON.getString("groovyClasspath");
-                        }
-                    }
-
-                    JSONObject jsonParameterConfigJavascriptSourceJSON = (JSONObject) parameterGroup.get("jsonParameterConfigJavascriptSource");
-                    if (jsonParameterConfigJavascriptSourceJSON != null) {
-                        if (jsonParameterConfigJavascriptSourceJSON.getInt("value") == 0) {
-                            javascript = jsonParameterConfigJavascriptSourceJSON.optString("javascript");
-                            javascriptFile = null;
-                        } else if (jsonParameterConfigJavascriptSourceJSON.getInt("value") == 1) {
-                            javascriptFile = jsonParameterConfigJavascriptSourceJSON.optString("javascriptFile");
-                            javascript = null;
-                        }
-                    }
-
-                    saveJSONParameterToFile = parameterGroup.optBoolean("saveJSONParameterToFile");
-                }
-            } else {
-                type = formData.getString("type");
-                propertyFile = formData.getString("propertyFile");
-                propertyKey = formData.getString("propertyKey");
-                propertyValue = formData.optString("value");
-                defaultPropertyFile = formData.optString("defaultPropertyFile");
-                defaultPropertyKey = formData.optString("defaultPropertyKey");
-                defaultPropertyValue = formData.optString("defaultValue");
-            }
-
-            //@formatter:off
-            return new ExtendedChoiceParameterDefinition(name,
-                    type,
-                    propertyValue,
-                    projectName,
-                    propertyFile,
-                    groovyScript,
-                    groovyScriptFile,
-                    bindings,
-                    groovyClasspath,
-                    propertyKey,
-                    defaultPropertyValue,
-                    defaultPropertyFile,
-                    defaultGroovyScript,
-                    defaultGroovyScriptFile,
-                    defaultBindings,
-                    defaultGroovyClasspath,
-                    defaultPropertyKey,
-                    descriptionPropertyValue,
-                    descriptionPropertyFile,
-                    descriptionGroovyScript,
-                    descriptionGroovyScriptFile,
-                    descriptionBindings,
-                    descriptionGroovyClasspath,
-                    descriptionPropertyKey,
-                    javascriptFile,
-                    javascript,
-                    saveJSONParameterToFile,
-                    quoteValue,
-                    visibleItemCount,
-                    description,
-                    multiSelectDelimiter);
-            //@formatter:on
+            return def;
         }
+
+        private <T extends Describable<?>> T bindJSONWithDescriptor(StaplerRequest req, JSONObject formData, String fieldName, Class<T> clazz) throws hudson.model.Descriptor.FormException {
+            formData = formData.getJSONObject(fieldName);
+
+            if (formData == null || formData.isNullObject()) {
+                return null;
+            }
+
+            String staplerClazzName = formData.optString("$class", null);
+            if (staplerClazzName == null) {
+                staplerClazzName = formData.optString("stapler-class", null);
+            }
+            if (staplerClazzName == null) {
+                throw new FormException("No $stapler nor stapler-class is specified", fieldName);
+            }
+            Jenkins jenkins = Jenkins.get();
+            if (jenkins == null) {
+                throw new IllegalStateException("Jenkins instance is unavailable.");
+            }
+            try {
+                @SuppressWarnings("unchecked")
+                Class<? extends T> staplerClass = (Class<? extends T>) jenkins.getPluginManager().uberClassLoader.loadClass(staplerClazzName);
+                Descriptor<?> d = jenkins.getDescriptorOrDie(staplerClass);
+
+                @SuppressWarnings("unchecked")
+                T instance = (T) d.newInstance(req, formData);
+                return instance;
+            } catch (ClassNotFoundException e) {
+                throw new FormException(String.format("Failed to instantiate %s", staplerClazzName), e, fieldName);
+            }
+        }// end bindJSONWithDescriptor()
+
     }
 
     private boolean quoteValue;
@@ -422,60 +228,6 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     private String javascript;
 
     private String projectName;
-
-    //@formatter:off
-    public ExtendedChoiceParameterDefinition(String name, String type, String value, String projectName, String propertyFile,
-                                             String groovyScript, String groovyScriptFile, String bindings, String groovyClasspath,
-                                             String propertyKey, String defaultValue, String defaultPropertyFile, String defaultGroovyScript,
-                                             String defaultGroovyScriptFile, String defaultBindings, String defaultGroovyClasspath, String defaultPropertyKey,
-                                             String descriptionPropertyValue, String descriptionPropertyFile, String descriptionGroovyScript, String descriptionGroovyScriptFile,
-                                             String descriptionBindings, String descriptionGroovyClasspath, String descriptionPropertyKey, String javascriptFile,
-                                             String javascript, boolean saveJSONParameterToFile, boolean quoteValue, int visibleItemCount,
-                                             String description, String multiSelectDelimiter) {
-        //@formatter:on
-
-        super(name, description);
-
-        this.type = type;
-        this.value = value;
-        this.projectName = projectName;
-        this.propertyFile = propertyFile;
-        this.propertyKey = propertyKey;
-        this.groovyScript = groovyScript;
-        this.groovyScriptFile = groovyScriptFile;
-        this.bindings = bindings;
-        this.groovyClasspath = groovyClasspath;
-
-        this.defaultValue = defaultValue;
-        this.defaultPropertyFile = defaultPropertyFile;
-        this.defaultPropertyKey = defaultPropertyKey;
-        this.defaultGroovyScript = defaultGroovyScript;
-        this.defaultGroovyScriptFile = defaultGroovyScriptFile;
-        this.defaultBindings = defaultBindings;
-        this.defaultGroovyClasspath = defaultGroovyClasspath;
-
-        this.descriptionPropertyValue = descriptionPropertyValue;
-        this.descriptionPropertyFile = descriptionPropertyFile;
-        this.descriptionPropertyKey = descriptionPropertyKey;
-        this.descriptionGroovyScript = descriptionGroovyScript;
-        this.descriptionGroovyScriptFile = descriptionGroovyScriptFile;
-        this.descriptionBindings = descriptionBindings;
-        this.descriptionGroovyClasspath = descriptionGroovyClasspath;
-        this.javascriptFile = javascriptFile;
-        this.javascript = javascript;
-        this.saveJSONParameterToFile = saveJSONParameterToFile;
-
-        this.quoteValue = quoteValue;
-        if (visibleItemCount == 0) {
-            visibleItemCount = 5;
-        }
-        this.visibleItemCount = visibleItemCount;
-
-        if (multiSelectDelimiter == null || "".equals(multiSelectDelimiter)) {
-            multiSelectDelimiter = ",";
-        }
-        this.multiSelectDelimiter = multiSelectDelimiter;
-    }
 
     @DataBoundConstructor
     public ExtendedChoiceParameterDefinition(String name, ChoiceListProvider choiceListProvider, String description) {
