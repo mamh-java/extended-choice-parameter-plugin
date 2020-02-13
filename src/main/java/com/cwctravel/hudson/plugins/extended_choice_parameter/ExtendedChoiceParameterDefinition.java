@@ -7,26 +7,10 @@
 package com.cwctravel.hudson.plugins.extended_choice_parameter;
 
 import com.opencsv.CSVReader;
-import groovy.lang.Binding;
-import groovy.lang.GroovyCodeSource;
-import groovy.lang.GroovyShell;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.Util;
-import hudson.cli.CLICommand;
-import hudson.model.AbstractProject;
-import hudson.model.Describable;
-import hudson.model.Descriptor;
-import hudson.model.DescriptorVisibilityFilter;
-import hudson.model.ParameterDefinition;
-import hudson.model.ParameterValue;
-import hudson.model.User;
-import hudson.util.DirScanner;
-import hudson.util.FileVisitor;
-import hudson.util.LogTaskListener;
-import jenkins.model.Jenkins;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
 import org.acegisecurity.Authentication;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -77,6 +61,25 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import groovy.lang.Binding;
+import groovy.lang.GroovyCodeSource;
+import groovy.lang.GroovyShell;
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.Util;
+import hudson.cli.CLICommand;
+import hudson.model.AbstractProject;
+import hudson.model.Describable;
+import hudson.model.Descriptor;
+import hudson.model.DescriptorVisibilityFilter;
+import hudson.model.ParameterDefinition;
+import hudson.model.ParameterValue;
+import hudson.model.User;
+import hudson.util.DirScanner;
+import hudson.util.FileVisitor;
+import hudson.util.LogTaskListener;
+import jenkins.model.Jenkins;
 
 public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     private static final long serialVersionUID = -2946187268529865645L;
@@ -258,11 +261,44 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     public ExtendedChoiceParameterDefinition(String name, ChoiceListProvider choiceListProvider, String description) {
         super(StringUtils.trim(name), description);
         this.choiceListProvider = choiceListProvider;
-        if(choiceListProvider instanceof MultilevelChoiceListProvider){
+        if (choiceListProvider instanceof MultilevelChoiceListProvider) {
             MultilevelChoiceListProvider p = (MultilevelChoiceListProvider) choiceListProvider;
-            this.type = p.getType();
+            this.type = p.getType(); //Parameter Type
             this.propertyFile = p.getPropertyFile();
             this.value = p.getPropertyValue();
+        } else if (choiceListProvider instanceof BasicChoiceListProvider) {
+            BasicChoiceListProvider p = (BasicChoiceListProvider) choiceListProvider;
+            this.type = p.getType(); //Parameter Type
+            this.visibleItemCount = p.getVisibleItemCount(); //Number of Visible Items
+            this.multiSelectDelimiter = p.getMultiSelectDelimiter(); //Delimiter
+            this.quoteValue = p.isQuoteValue(); //Quote Value
+
+            this.value = p.getPropertyValue();
+
+            this.propertyFile = p.getPropertyFile();
+            this.propertyKey = p.getPropertyKey();
+
+            this.groovyScript = p.getGroovyScript();
+            this.groovyClasspath = p.getGroovyClasspath();
+            this.bindings = p.getBindings();
+
+            this.groovyScriptFile = p.getGroovyScriptFile();
+
+            this.defaultValue = p.getDefaultPropertyValue();
+            this.defaultPropertyFile = p.getDefaultPropertyFile();
+            this.defaultPropertyKey = p.getDefaultPropertyKey();
+            this.defaultGroovyScript = p.getDefaultGroovyScript();
+            this.defaultBindings = p.getDefaultBindings();
+            this.defaultGroovyClasspath = p.getDefaultGroovyClasspath();
+            this.defaultGroovyScriptFile = p.getDefaultGroovyScriptFile();
+
+            this.descriptionPropertyValue = p.getDescriptionPropertyValue();
+            this.descriptionPropertyFile = p.getDescriptionPropertyFile();
+            this.descriptionPropertyKey = p.getDescriptionPropertyKey();
+            this.descriptionGroovyScript = p.getDescriptionGroovyScript();
+            this.descriptionBindings = p.getDescriptionBindings();
+            this.descriptionGroovyClasspath = p.getDescriptionGroovyClasspath();
+            this.descriptionGroovyScriptFile = p.getDescriptionGroovyScriptFile();
         }
     }
 
