@@ -3,62 +3,73 @@
  See the file license.txt for copying permission. 
 -->
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+    <j:choose>
+        <j:when test="${instance.type eq 'PT_SINGLE_SELECT' or instance.type eq 'PT_MULTI_SELECT' or instance.type eq 'PT_RADIO' or instance.type eq 'PT_CHECKBOX' or instance.type eq 'PT_TEXTBOX' or instance.type eq 'PT_HIDDEN'}">
+            <j:set var="parameterType" value="basic"/>
+        </j:when>
+        <j:when test="${instance.type eq 'PT_MULTI_LEVEL_SINGLE_SELECT' or instance.type eq 'PT_MULTI_LEVEL_MULTI_SELECT'}">
+            <j:set var="parameterType" value="multilevel"/>
+        </j:when>
+        <j:when test="${instance.type eq 'PT_JSON'}">
+            <j:set var="parameterType" value="json"/>
+        </j:when>
+    </j:choose>
+
+    <f:radioBlock name="jsonParameterConfigSource" title="JSON Parameter Config Groovy Script" value="0"
+                  checked="${parameterType eq 'json' and not empty instance.groovyScript}">
+
+        <f:entry field="groovyScript">
+            <f:textarea value="${instance.groovyScript}"/>
+        </f:entry>
+        <f:advanced>
+            <f:entry field="bindings" title="${%Variable bindings}">
+                <f:textarea value="${instance.bindings}"/>
+            </f:entry>
+            <f:entry field="groovyClasspath" title="${%Groovy Classpath}">
+                <f:textarea value="${instance.groovyClasspath}"/>
+            </f:entry>
+        </f:advanced>
+
+    </f:radioBlock>
+
+    <f:radioBlock name="jsonParameterConfigSource" title="JSON Parameter Config Groovy Script File" value="1"
+                  checked="${parameterType eq 'json' and not empty instance.groovyScriptFile}">
+
+        <f:entry field="groovyScriptFile">
+            <f:textarea value="${instance.groovyScriptFile}"/>
+        </f:entry>
+        <f:advanced>
+            <f:entry field="bindings" title="${%Variable bindings}">
+                <f:textarea value="${instance.bindings}"/>
+            </f:entry>
+            <f:entry field="groovyClasspath" title="${%Groovy Classpath}">
+                <f:textarea value="${instance.groovyClasspath}"/>
+            </f:entry>
+        </f:advanced>
+
+    </f:radioBlock>
 
 
+    <f:radioBlock name="jsonParameterConfigJavascriptSource" title="JSON Parameter Config Javascript" value="0"
+                  checked="${parameterType eq 'json' and not empty instance.javascript}">
+        <f:entry field="javascript">
+            <f:textarea value="${instance.javascript}"/>
+        </f:entry>
+    </f:radioBlock>
 
-<f:radioBlock name="jsonParameterConfigSource" title="JSON Parameter Config Groovy Script" value="0"
-    checked="${parameterType eq 'json' and not empty instance.groovyScript}">
+    <f:radioBlock name="jsonParameterConfigJavascriptSource" title="JSON Parameter Config Javascript File" value="1"
+                  checked="${parameterType eq 'json' and not empty instance.javascriptFile}">
+        <f:entry field="javascriptFile">
+            <f:textbox value="${instance.javascriptFile}"/>
+        </f:entry>
+    </f:radioBlock>
 
-     <f:entry field="groovyScript">
-          <f:textarea value="${instance.groovyScript}"/>
-     </f:entry>
-     <f:advanced>
-          <f:entry field="bindings" title="${%Variable bindings}">
-              <f:textarea value="${instance.bindings}" />
-          </f:entry>
-          <f:entry field="groovyClasspath" title="${%Groovy Classpath}">
-              <f:textarea value="${instance.groovyClasspath}" />
-          </f:entry>
-     </f:advanced>
-
- </f:radioBlock>
-
- <f:radioBlock name="jsonParameterConfigSource" title="JSON Parameter Config Groovy Script File" value="1"
-    checked="${parameterType eq 'json' and not empty instance.groovyScriptFile}">
-
-    <f:entry field="groovyScriptFile">
-           <f:textarea value="${instance.groovyScriptFile}"/>
+    <f:entry field="saveJSONParameterToFile" title="${%Save Parameter to File}">
+        <f:checkbox value="${instance.saveJSONParameterToFile}"/>
     </f:entry>
-    <f:advanced>
-          <f:entry field="bindings" title="${%Variable bindings}">
-              <f:textarea value="${instance.bindings}" />
-          </f:entry>
-          <f:entry field="groovyClasspath" title="${%Groovy Classpath}">
-              <f:textarea value="${instance.groovyClasspath}" />
-          </f:entry>
-    </f:advanced>
-
- </f:radioBlock>
-
-
-<f:radioBlock name="jsonParameterConfigJavascriptSource" title="JSON Parameter Config Javascript" value="0"
-    checked="${parameterType eq 'json' and not empty instance.javascript}">
- <f:entry field="javascript">
-      <f:textarea value="${instance.javascript}"/>
- </f:entry>
-</f:radioBlock>
-
-<f:radioBlock name="jsonParameterConfigJavascriptSource" title="JSON Parameter Config Javascript File" value="1"
-    checked="${parameterType eq 'json' and not empty instance.javascriptFile}">
-<f:entry field="javascriptFile">
-       <f:textbox value="${instance.javascriptFile}"/>
-</f:entry>
-</f:radioBlock>
-
-<f:entry field="saveJSONParameterToFile" title="${%Save Parameter to File}">
-    <f:checkbox value="${instance.saveJSONParameterToFile}"/>
-</f:entry>
 
 
 </j:jelly>
