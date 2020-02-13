@@ -6,6 +6,46 @@
 
 package com.cwctravel.hudson.plugins.extended_choice_parameter;
 
+import com.opencsv.CSVReader;
+import groovy.lang.Binding;
+import groovy.lang.GroovyCodeSource;
+import groovy.lang.GroovyShell;
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.Util;
+import hudson.cli.CLICommand;
+import hudson.model.AbstractProject;
+import hudson.model.Describable;
+import hudson.model.Descriptor;
+import hudson.model.DescriptorVisibilityFilter;
+import hudson.model.ParameterDefinition;
+import hudson.model.ParameterValue;
+import hudson.model.User;
+import hudson.util.DirScanner;
+import hudson.util.FileVisitor;
+import hudson.util.LogTaskListener;
+import jenkins.model.Jenkins;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import org.acegisecurity.Authentication;
+import org.acegisecurity.context.SecurityContextHolder;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.taskdefs.Property;
+import org.codehaus.groovy.control.CompilerConfiguration;
+import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ClasspathEntry;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
+import org.jenkinsci.plugins.scriptsecurity.scripts.UnapprovedClasspathException;
+import org.jenkinsci.plugins.scriptsecurity.scripts.UnapprovedUsageException;
+import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.Stapler;
+import org.kohsuke.stapler.StaplerRequest;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,6 +63,7 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -36,46 +77,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.servlet.ServletException;
-
-import hudson.model.*;
-import org.acegisecurity.Authentication;
-import org.acegisecurity.context.SecurityContextHolder;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.taskdefs.Property;
-import org.codehaus.groovy.control.CompilerConfiguration;
-import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext;
-import org.jenkinsci.plugins.scriptsecurity.scripts.ClasspathEntry;
-import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
-import org.jenkinsci.plugins.scriptsecurity.scripts.UnapprovedClasspathException;
-import org.jenkinsci.plugins.scriptsecurity.scripts.UnapprovedUsageException;
-import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage;
-import org.jenkinsci.Symbol;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.Stapler;
-import org.kohsuke.stapler.StaplerRequest;
-
-import com.opencsv.CSVReader;
-import groovy.lang.Binding;
-import groovy.lang.GroovyCodeSource;
-import groovy.lang.GroovyShell;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.Util;
-import hudson.cli.CLICommand;
-import hudson.util.DirScanner;
-import hudson.util.FileVisitor;
-import hudson.util.FormValidation;
-import hudson.util.LogTaskListener;
-import jenkins.model.Jenkins;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 
 public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     private static final long serialVersionUID = -2946187268529865645L;
@@ -115,6 +116,30 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
         return choiceListProvider;
     }
 
+    public ChoiceListProvider getEnabledChoiceListProvider() {
+        ChoiceListProvider p = getChoiceListProvider();
+        if (p == null) {
+            return null;
+        }
+
+        // filter providers.
+        List<Descriptor<ChoiceListProvider>> testList = DescriptorVisibilityFilter.apply(
+                getDescriptor(),
+                Arrays.asList(p.getDescriptor())
+        );
+        if (testList.isEmpty()) {
+            LOGGER.log(Level.WARNING, "{0} is configured but disabled in the system configuration.", p.getDescriptor().getDisplayName());
+            return null;
+        }
+        return p;
+    }
+
+    public List<String> getChoiceList() {
+        ChoiceListProvider provider = getEnabledChoiceListProvider();
+        List<String> choiceList = (provider != null) ? provider.getChoiceList() : null;
+        return (choiceList != null) ? choiceList : new ArrayList<>(0);
+    }
+
     @Extension
     @Symbol({"extendedChoice"})
     public static class DescriptorImpl extends ParameterDescriptor {
@@ -129,7 +154,7 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 
         @Override
         public ExtendedChoiceParameterDefinition newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-             ExtendedChoiceParameterDefinition def = new ExtendedChoiceParameterDefinition(
+            ExtendedChoiceParameterDefinition def = new ExtendedChoiceParameterDefinition(
                     formData.getString("name"),
                     bindJSONWithDescriptor(req, formData, "choiceListProvider", ChoiceListProvider.class),
                     formData.getString("description")
@@ -233,6 +258,12 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     public ExtendedChoiceParameterDefinition(String name, ChoiceListProvider choiceListProvider, String description) {
         super(StringUtils.trim(name), description);
         this.choiceListProvider = choiceListProvider;
+        if(choiceListProvider instanceof MultilevelChoiceListProvider){
+            MultilevelChoiceListProvider p = (MultilevelChoiceListProvider) choiceListProvider;
+            this.type = p.getType();
+            this.propertyFile = p.getPropertyFile();
+            this.value = p.getPropertyValue();
+        }
     }
 
     private Map<String, Boolean> computeDefaultValueMap() {
