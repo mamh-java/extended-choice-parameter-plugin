@@ -272,6 +272,13 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
             this.visibleItemCount = p.getVisibleItemCount(); //Number of Visible Items
             this.multiSelectDelimiter = p.getMultiSelectDelimiter(); //Delimiter
             this.quoteValue = p.isQuoteValue(); //Quote Value
+            if (visibleItemCount == 0) {
+                visibleItemCount = 5;
+            }
+
+            if (multiSelectDelimiter == null || "".equals(multiSelectDelimiter)) {
+                multiSelectDelimiter = ",";
+            }
 
             this.value = p.getPropertyValue();
 
@@ -299,6 +306,15 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
             this.descriptionBindings = p.getDescriptionBindings();
             this.descriptionGroovyClasspath = p.getDescriptionGroovyClasspath();
             this.descriptionGroovyScriptFile = p.getDescriptionGroovyScriptFile();
+        } else if (choiceListProvider instanceof JSONChoiceListProvider) {
+            JSONChoiceListProvider p = (JSONChoiceListProvider) choiceListProvider;
+            this.groovyScript = p.getGroovyScript();
+            this.bindings = p.getBindings();
+            this.groovyClasspath = p.getGroovyClasspath();
+            this.groovyScriptFile = p.getGroovyScriptFile();
+            this.javascript = p.getJavascript();
+            this.javascriptFile = p.getJavascriptFile();
+            this.saveJSONParameterToFile = p.isSaveJSONParameterToFile();
         }
     }
 
