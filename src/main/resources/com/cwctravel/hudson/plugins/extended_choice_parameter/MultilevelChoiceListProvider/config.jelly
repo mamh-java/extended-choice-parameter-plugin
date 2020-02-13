@@ -3,26 +3,39 @@
  See the file license.txt for copying permission. 
 -->
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <j:choose>
+        <j:when test="${instance.type eq 'PT_SINGLE_SELECT' or instance.type eq 'PT_MULTI_SELECT' or instance.type eq 'PT_RADIO' or instance.type eq 'PT_CHECKBOX' or instance.type eq 'PT_TEXTBOX' or instance.type eq 'PT_HIDDEN'}">
+            <j:set var="parameterType" value="basic"/>
+        </j:when>
+        <j:when test="${instance.type eq 'PT_MULTI_LEVEL_SINGLE_SELECT' or instance.type eq 'PT_MULTI_LEVEL_MULTI_SELECT'}">
+            <j:set var="parameterType" value="multilevel"/>
+        </j:when>
+        <j:when test="${instance.type eq 'PT_JSON'}">
+            <j:set var="parameterType" value="json"/>
+        </j:when>
+    </j:choose>
+    <f:entry name="type" title="Parameter Type" field="type">
+        <select name="type">
+            <option value="PT_MULTI_LEVEL_SINGLE_SELECT"
+                    selected="${instance.type eq 'PT_MULTI_LEVEL_SINGLE_SELECT' ? 'true' : null}">
+                Multi-Level Single Select
+            </option>
+            <option value="PT_MULTI_LEVEL_MULTI_SELECT"
+                    selected="${instance.type eq 'PT_MULTI_LEVEL_MULTI_SELECT' ? 'true' : null}">
+                Multi-Level Multi Select
+            </option>
+        </select>
+    </f:entry>
 
-<f:entry name="type" title="Parameter Type" field="type">
-    <select name="type">
-        <option value="PT_MULTI_LEVEL_SINGLE_SELECT" selected="${instance.type eq 'PT_MULTI_LEVEL_SINGLE_SELECT' ? 'true' : null}">
-            Multi-Level Single Select
-        </option>
-        <option value="PT_MULTI_LEVEL_MULTI_SELECT" selected="${instance.type eq 'PT_MULTI_LEVEL_MULTI_SELECT' ? 'true' : null}">
-            Multi-Level Multi Select
-        </option>
-    </select>
-</f:entry>
+    <f:entry title="Property File" field="propertyFile">
+        <f:textbox value="${instance.propertyFile}"/>
+    </f:entry>
 
-<f:entry title="Property File" field="propertyFile">
-   <f:textbox value="${instance.propertyFile}"/>
-</f:entry>
-
-<f:entry title="Property Value" field="propertyValue">
-   <f:textbox value="${instance.value}"/>
-</f:entry>
+    <f:entry title="Property Value" field="propertyValue">
+        <f:textbox value="${instance.value}"/>
+    </f:entry>
 
 
 </j:jelly>
