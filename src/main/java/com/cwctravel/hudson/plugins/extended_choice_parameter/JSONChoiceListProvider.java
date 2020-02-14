@@ -76,59 +76,7 @@ public class JSONChoiceListProvider extends ChoiceListProvider {
         }
 
 
-        @Override
-        public JSONChoiceListProvider newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-            JSONChoiceListProvider provider = (JSONChoiceListProvider) super.newInstance(req, formData);
-            boolean saveJSONParameterToFile = false;
 
-            String groovyScript = null;
-            String groovyScriptFile = null;
-            String bindings = null;
-            String groovyClasspath = null;
-            String javascriptFile = null;
-            String javascript = null;
-
-
-            provider.setType(PARAMETER_TYPE_JSON);
-            JSONObject json1 = (JSONObject) formData.get("jsonParameterConfigSource");
-            if (json1 != null) {
-                if (json1.getInt("value") == 0) {
-                    groovyScript = json1.getString("groovyScript");
-                    groovyScriptFile = null;
-                    bindings = json1.getString("bindings");
-                    groovyClasspath = json1.getString("groovyClasspath");
-                } else if (json1.getInt("value") == 1) {
-                    groovyScript = null;
-                    groovyScriptFile = json1.getString("groovyScriptFile");
-                    bindings = json1.getString("bindings");
-                    groovyClasspath = json1.getString("groovyClasspath");
-                }
-            }
-            provider.setGroovyScriptFile(groovyScriptFile);
-            provider.setGroovyScript(groovyScript);
-            provider.setBindings(bindings);
-            provider.setGroovyClasspath(groovyClasspath);
-
-
-            JSONObject json2 = (JSONObject) formData.get("jsonParameterConfigJavascriptSource");
-            if (json2 != null) {
-                if (json2.getInt("value") == 0) {
-                    javascript = json2.optString("javascript");
-                    javascriptFile = null;
-                } else if (json2.getInt("value") == 1) {
-                    javascriptFile = json2.optString("javascriptFile");
-                    javascript = null;
-                }
-            }
-            provider.setJavascript(javascript);
-            provider.setJavascriptFile(javascriptFile);
-
-            saveJSONParameterToFile = formData.optBoolean("saveJSONParameterToFile");
-            provider.setSaveJSONParameterToFile(saveJSONParameterToFile);
-
-
-            return provider;
-        }
     }
 
     public String getType() {
