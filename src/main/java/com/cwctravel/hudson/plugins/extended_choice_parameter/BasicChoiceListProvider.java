@@ -1,12 +1,10 @@
 package com.cwctravel.hudson.plugins.extended_choice_parameter;
 
+import hudson.Extension;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import java.util.List;
-
 import javax.annotation.Nonnull;
-
-import hudson.Extension;
+import java.util.List;
 
 public class BasicChoiceListProvider extends ChoiceListProvider {
     private String type;
@@ -22,8 +20,6 @@ public class BasicChoiceListProvider extends ChoiceListProvider {
     private String groovyScriptFile = null;
     private String bindings = null;
     private String groovyClasspath = null;
-    private String javascriptFile = null;
-    private String javascript = null;
 
     private String defaultPropertyValue = null;
     private String defaultPropertyKey = null;
@@ -42,34 +38,40 @@ public class BasicChoiceListProvider extends ChoiceListProvider {
     private String descriptionGroovyClasspath = null;
 
     @DataBoundConstructor
-    public BasicChoiceListProvider(String type, int visibleItemCount, String multiSelectDelimiter, boolean quoteValue, String propertyValue, String propertyKey, String propertyFile, String groovyScript, String groovyScriptFile, String bindings, String groovyClasspath, String javascriptFile, String javascript, String defaultPropertyValue, String defaultPropertyKey, String defaultPropertyFile, String defaultGroovyScript, String defaultGroovyScriptFile, String defaultBindings, String defaultGroovyClasspath, String descriptionPropertyValue, String descriptionPropertyKey, String descriptionPropertyFile, String descriptionGroovyScript, String descriptionGroovyScriptFile, String descriptionBindings, String descriptionGroovyClasspath) {
+    public BasicChoiceListProvider(String type, int visibleItemCount, String multiSelectDelimiter, boolean quoteValue,
+                                   PropertySource propertySource,
+                                   DefaultPropertySource defaultPropertySource,
+                                   DescriptPropertySource descriptionPropertySource) {
         this.type = type;
         this.visibleItemCount = visibleItemCount;
         this.multiSelectDelimiter = multiSelectDelimiter;
         this.quoteValue = quoteValue;
-        this.propertyValue = propertyValue;
-        this.propertyKey = propertyKey;
-        this.propertyFile = propertyFile;
-        this.groovyScript = groovyScript;
-        this.groovyScriptFile = groovyScriptFile;
-        this.bindings = bindings;
-        this.groovyClasspath = groovyClasspath;
-        this.javascriptFile = javascriptFile;
-        this.javascript = javascript;
-        this.defaultPropertyValue = defaultPropertyValue;
-        this.defaultPropertyKey = defaultPropertyKey;
-        this.defaultPropertyFile = defaultPropertyFile;
-        this.defaultGroovyScript = defaultGroovyScript;
-        this.defaultGroovyScriptFile = defaultGroovyScriptFile;
-        this.defaultBindings = defaultBindings;
-        this.defaultGroovyClasspath = defaultGroovyClasspath;
-        this.descriptionPropertyValue = descriptionPropertyValue;
-        this.descriptionPropertyKey = descriptionPropertyKey;
-        this.descriptionPropertyFile = descriptionPropertyFile;
-        this.descriptionGroovyScript = descriptionGroovyScript;
-        this.descriptionGroovyScriptFile = descriptionGroovyScriptFile;
-        this.descriptionBindings = descriptionBindings;
-        this.descriptionGroovyClasspath = descriptionGroovyClasspath;
+        this.propertyValue = propertySource.getPropertyValue();
+        this.propertyKey = propertySource.getPropertyKey();
+        this.propertyFile = propertySource.getPropertyFile();
+
+        this.groovyScript = propertySource.getGroovyScript();
+        this.groovyScriptFile = propertySource.getGroovyScriptFile();
+        this.bindings = propertySource.getBindings();
+        this.groovyClasspath = propertySource.getGroovyClasspath();
+
+
+        this.defaultPropertyValue = defaultPropertySource.getDefaultPropertyValue();
+        this.defaultPropertyKey = defaultPropertySource.getDefaultPropertyKey();
+        this.defaultPropertyFile = defaultPropertySource.getDefaultPropertyFile();
+        this.defaultGroovyScript = defaultPropertySource.getDefaultGroovyScript();
+        this.defaultGroovyScriptFile = defaultPropertySource.getDefaultGroovyScriptFile();
+        this.defaultBindings = defaultPropertySource.getDefaultBindings();
+        this.defaultGroovyClasspath = defaultPropertySource.getDefaultGroovyClasspath();
+
+
+        this.descriptionPropertyValue = descriptionPropertySource.getDescriptionPropertyValue();
+        this.descriptionPropertyKey = descriptionPropertySource.getDescriptionPropertyKey();
+        this.descriptionPropertyFile = descriptionPropertySource.getDescriptionPropertyFile();
+        this.descriptionGroovyScript = descriptionPropertySource.getDescriptionGroovyScript();
+        this.descriptionGroovyScriptFile = descriptionPropertySource.getDescriptionGroovyScriptFile();
+        this.descriptionBindings = descriptionPropertySource.getDescriptionBindings();
+        this.descriptionGroovyClasspath = descriptionPropertySource.getDescriptionGroovyClasspath();
     }
 
 
@@ -176,22 +178,6 @@ public class BasicChoiceListProvider extends ChoiceListProvider {
 
     public void setGroovyClasspath(String groovyClasspath) {
         this.groovyClasspath = groovyClasspath;
-    }
-
-    public String getJavascriptFile() {
-        return javascriptFile;
-    }
-
-    public void setJavascriptFile(String javascriptFile) {
-        this.javascriptFile = javascriptFile;
-    }
-
-    public String getJavascript() {
-        return javascript;
-    }
-
-    public void setJavascript(String javascript) {
-        this.javascript = javascript;
     }
 
     public String getDefaultPropertyValue() {
