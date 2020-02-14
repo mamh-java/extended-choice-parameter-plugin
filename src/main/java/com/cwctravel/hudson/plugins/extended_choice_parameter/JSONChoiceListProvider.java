@@ -1,9 +1,9 @@
 package com.cwctravel.hudson.plugins.extended_choice_parameter;
 
 import hudson.Extension;
+import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
-import net.sf.json.JSONObject;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -22,10 +22,42 @@ public class JSONChoiceListProvider extends ChoiceListProvider {
 
     private boolean saveJSONParameterToFile;
 
+    private JavascriptSource jsonParameterConfigJavascriptSource;
+    private GroovyscriptSource jsonParameterConfigSource;
 
     @DataBoundConstructor
-    public JSONChoiceListProvider() {
+    public JSONChoiceListProvider(GroovyscriptSource jsonParameterConfigSource, JavascriptSource jsonParameterConfigJavascriptSource, boolean saveJSONParameterToFile) {
+        this.jsonParameterConfigSource = jsonParameterConfigSource;
 
+        this.jsonParameterConfigJavascriptSource = jsonParameterConfigJavascriptSource;
+
+        this.setType(PARAMETER_TYPE_JSON);
+
+        this.setGroovyScriptFile(jsonParameterConfigSource.getGroovyScriptFile());
+        this.setGroovyScript(jsonParameterConfigSource.getGroovyScript());
+        this.setBindings(jsonParameterConfigSource.getBindings());
+        this.setGroovyClasspath(jsonParameterConfigSource.getGroovyClasspath());
+
+        this.setJavascript(jsonParameterConfigJavascriptSource.getJavascript());
+        this.setJavascriptFile(jsonParameterConfigJavascriptSource.getJavascriptFile());
+
+        this.saveJSONParameterToFile = saveJSONParameterToFile;
+    }
+
+    public JavascriptSource getJsonParameterConfigJavascriptSource() {
+        return jsonParameterConfigJavascriptSource;
+    }
+
+    public void setJsonParameterConfigJavascriptSource(JavascriptSource jsonParameterConfigJavascriptSource) {
+        this.jsonParameterConfigJavascriptSource = jsonParameterConfigJavascriptSource;
+    }
+
+    public GroovyscriptSource getJsonParameterConfigSource() {
+        return jsonParameterConfigSource;
+    }
+
+    public void setJsonParameterConfigSource(GroovyscriptSource jsonParameterConfigSource) {
+        this.jsonParameterConfigSource = jsonParameterConfigSource;
     }
 
     @Override
