@@ -7,10 +7,26 @@
 package com.cwctravel.hudson.plugins.extended_choice_parameter;
 
 import com.opencsv.CSVReader;
-
+import groovy.lang.Binding;
+import groovy.lang.GroovyCodeSource;
+import groovy.lang.GroovyShell;
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.Util;
+import hudson.cli.CLICommand;
+import hudson.model.AbstractProject;
+import hudson.model.Describable;
+import hudson.model.Descriptor;
+import hudson.model.DescriptorVisibilityFilter;
+import hudson.model.ParameterDefinition;
+import hudson.model.ParameterValue;
+import hudson.model.User;
+import hudson.util.DirScanner;
+import hudson.util.FileVisitor;
+import hudson.util.LogTaskListener;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
 import org.acegisecurity.Authentication;
 import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -61,25 +77,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import groovy.lang.Binding;
-import groovy.lang.GroovyCodeSource;
-import groovy.lang.GroovyShell;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.Util;
-import hudson.cli.CLICommand;
-import hudson.model.AbstractProject;
-import hudson.model.Describable;
-import hudson.model.Descriptor;
-import hudson.model.DescriptorVisibilityFilter;
-import hudson.model.ParameterDefinition;
-import hudson.model.ParameterValue;
-import hudson.model.User;
-import hudson.util.DirScanner;
-import hudson.util.FileVisitor;
-import hudson.util.LogTaskListener;
-import jenkins.model.Jenkins;
 
 public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     private static final long serialVersionUID = -2946187268529865645L;
@@ -166,7 +163,7 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
             return def;
         }
 
-        private <T extends Describable<?>> T bindJSONWithDescriptor(StaplerRequest req, JSONObject formData, String fieldName, Class<T> clazz) throws hudson.model.Descriptor.FormException {
+        private <T extends Describable<?>> T bindJSONWithDescriptor(StaplerRequest req, JSONObject formData, String fieldName, Class<T> clazz) throws FormException {
             formData = formData.getJSONObject(fieldName);
 
             if (formData == null || formData.isNullObject()) {
@@ -315,6 +312,11 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
             this.javascript = p.getJavascript();
             this.javascriptFile = p.getJavascriptFile();
             this.saveJSONParameterToFile = p.isSaveJSONParameterToFile();
+        }
+
+        AbstractProject<?, ?> project = Stapler.getCurrentRequest().findAncestorObject(AbstractProject.class);
+        if(project != null) {
+            projectName = project.getName();
         }
     }
 
