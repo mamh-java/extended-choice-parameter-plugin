@@ -8,10 +8,11 @@ import java.util.List;
 
 public class BasicChoiceListProvider extends ChoiceListProvider {
     private String type;
+    private String value;
+    private String defaultValue;
     private int visibleItemCount;
     private String multiSelectDelimiter;
     private boolean quoteValue;
-
 
     private String propertyValue = null;
     private String propertyKey = null;
@@ -37,6 +38,7 @@ public class BasicChoiceListProvider extends ChoiceListProvider {
     private String descriptionBindings = null;
     private String descriptionGroovyClasspath = null;
 
+
     @DataBoundConstructor
     public BasicChoiceListProvider(String type, int visibleItemCount, String multiSelectDelimiter, boolean quoteValue,
                                    PropertySource propertySource,
@@ -47,6 +49,7 @@ public class BasicChoiceListProvider extends ChoiceListProvider {
         this.multiSelectDelimiter = multiSelectDelimiter;
         this.quoteValue = quoteValue;
         this.propertyValue = propertySource.getPropertyValue();
+        this.value = propertySource.getPropertyValue();
         this.propertyKey = propertySource.getPropertyKey();
         this.propertyFile = propertySource.getPropertyFile();
 
@@ -57,6 +60,7 @@ public class BasicChoiceListProvider extends ChoiceListProvider {
 
 
         this.defaultPropertyValue = defaultPropertySource.getDefaultPropertyValue();
+        this.defaultValue = defaultPropertySource.getDefaultPropertyValue();
         this.defaultPropertyKey = defaultPropertySource.getDefaultPropertyKey();
         this.defaultPropertyFile = defaultPropertySource.getDefaultPropertyFile();
         this.defaultGroovyScript = defaultPropertySource.getDefaultGroovyScript();
@@ -97,6 +101,14 @@ public class BasicChoiceListProvider extends ChoiceListProvider {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
     }
 
     public int getVisibleItemCount() {
@@ -186,6 +198,14 @@ public class BasicChoiceListProvider extends ChoiceListProvider {
 
     public void setDefaultPropertyValue(String defaultPropertyValue) {
         this.defaultPropertyValue = defaultPropertyValue;
+    }
+
+    public String getDefaultValue() {
+        return defaultValue;
+    }
+
+    public void setDefaultValue(String defaultValue) {
+        this.defaultValue = defaultValue;
     }
 
     public String getDefaultPropertyKey() {
