@@ -23,6 +23,7 @@ import hudson.model.ParameterValue;
 import hudson.model.User;
 import hudson.util.DirScanner;
 import hudson.util.FileVisitor;
+import hudson.util.FormValidation;
 import hudson.util.LogTaskListener;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
@@ -32,6 +33,7 @@ import org.acegisecurity.context.SecurityContextHolder;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Property;
 import org.codehaus.groovy.control.CompilerConfiguration;
@@ -43,9 +45,11 @@ import org.jenkinsci.plugins.scriptsecurity.scripts.UnapprovedClasspathException
 import org.jenkinsci.plugins.scriptsecurity.scripts.UnapprovedUsageException;
 import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.servlet.ServletException;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -107,95 +111,6 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 
     private transient GroovyShell groovyShell;
 
-    /**
-     * The choice provider the user specified.
-     *
-     * @return choice provider.
-     */
-    public ChoiceListProvider getChoiceListProvider() {
-        return choiceListProvider;
-    }
-
-    public ChoiceListProvider getEnabledChoiceListProvider() {
-        ChoiceListProvider p = getChoiceListProvider();
-        if (p == null) {
-            return null;
-        }
-
-        // filter providers.
-        List<Descriptor<ChoiceListProvider>> testList = DescriptorVisibilityFilter.apply(
-                getDescriptor(),
-                Arrays.asList(p.getDescriptor())
-        );
-        if (testList.isEmpty()) {
-            LOGGER.log(Level.WARNING, "{0} is configured but disabled in the system configuration.", p.getDescriptor().getDisplayName());
-            return null;
-        }
-        return p;
-    }
-
-    public List<String> getChoiceList() {
-        ChoiceListProvider provider = getEnabledChoiceListProvider();
-        List<String> choiceList = (provider != null) ? provider.getChoiceList() : null;
-        return (choiceList != null) ? choiceList : new ArrayList<>(0);
-    }
-
-    @Extension
-    @Symbol({"extendedChoice"})
-    public static class DescriptorImpl extends ParameterDescriptor {
-        @Override
-        public String getDisplayName() {
-            return Messages.ExtendedChoiceParameterDefinition_DisplayName();
-        }
-
-        public List<Descriptor<ChoiceListProvider>> getEnabledChoiceListProviderList() {
-            return DescriptorVisibilityFilter.apply(this, ChoiceListProvider.all());
-        }
-
-        @Override
-        public ExtendedChoiceParameterDefinition newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-            ExtendedChoiceParameterDefinition def = new ExtendedChoiceParameterDefinition(
-                    formData.getString("name"),
-                    bindJSONWithDescriptor(req, formData, "choiceListProvider", ChoiceListProvider.class),
-                    formData.getString("description")
-            );
-
-            return def;
-        }
-
-        private <T extends Describable<?>> T bindJSONWithDescriptor(StaplerRequest req, JSONObject formData, String fieldName, Class<T> clazz) throws FormException {
-            formData = formData.getJSONObject(fieldName);
-
-            if (formData == null || formData.isNullObject()) {
-                return null;
-            }
-
-            String staplerClazzName = formData.optString("$class", null);
-            if (staplerClazzName == null) {
-                staplerClazzName = formData.optString("stapler-class", null);
-            }
-            if (staplerClazzName == null) {
-                throw new FormException("No $stapler nor stapler-class is specified", fieldName);
-            }
-            Jenkins jenkins = Jenkins.get();
-            if (jenkins == null) {
-                throw new IllegalStateException("Jenkins instance is unavailable.");
-            }
-            try {
-                @SuppressWarnings("unchecked")
-                Class<? extends T> staplerClass = (Class<? extends T>) jenkins.getPluginManager().uberClassLoader.loadClass(staplerClazzName);
-                Descriptor<?> d = jenkins.getDescriptorOrDie(staplerClass);
-
-                @SuppressWarnings("unchecked")
-                T instance = (T) d.newInstance(req, formData);
-                return instance;
-            } catch (ClassNotFoundException e) {
-                throw new FormException(String.format("Failed to instantiate %s", staplerClazzName), e, fieldName);
-            }
-        }// end bindJSONWithDescriptor()
-
-    }
-
     private boolean quoteValue;
 
     private boolean saveJSONParameterToFile;
@@ -253,6 +168,122 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     private String javascript;
 
     private String projectName;
+
+    @Extension
+    @Symbol({"extendedChoice"})
+    public static class DescriptorImpl extends ParameterDescriptor {
+        @Override
+        public String getDisplayName() {
+            return Messages.ExtendedChoiceParameterDefinition_DisplayName();
+        }
+
+        public List<Descriptor<ChoiceListProvider>> getEnabledChoiceListProviderList() {
+            return DescriptorVisibilityFilter.apply(this, ChoiceListProvider.all());
+        }
+
+        public FormValidation doCheckPropertyFile(@QueryParameter final String propertyFile, @QueryParameter final String propertyKey,
+                                                  @QueryParameter final String type) throws IOException, ServletException {
+            if(StringUtils.isBlank(propertyFile)) {
+                return FormValidation.ok();
+            }
+
+            Project project = new Project();
+            Property property = new Property();
+            property.setProject(project);
+
+            File prop = new File(propertyFile);
+            try {
+                if(prop.exists()) {
+                    property.setFile(prop);
+                }
+                else {
+                    URL propertyFileUrl = new URL(propertyFile);
+                    property.setUrl(propertyFileUrl);
+                }
+                property.execute();
+            }
+            catch(MalformedURLException e) {
+                return FormValidation.warning(Messages.ExtendedChoiceParameterDefinition_PropertyFileDoesntExist(), propertyFile);
+            }
+            catch(BuildException e) {
+                return FormValidation.warning(Messages.ExtendedChoiceParameterDefinition_PropertyFileDoesntExist(), propertyFile);
+            }
+
+            if(PARAMETER_TYPE_MULTI_LEVEL_SINGLE_SELECT.equals(type) || PARAMETER_TYPE_MULTI_LEVEL_MULTI_SELECT.equals(type)) {
+                return FormValidation.ok();
+            }
+            else if(StringUtils.isNotBlank(propertyKey)) {
+                if(project.getProperty(propertyKey) != null) {
+                    return FormValidation.ok();
+                }
+                else {
+                    return FormValidation.warning(Messages.ExtendedChoiceParameterDefinition_PropertyFileExistsButProvidedKeyIsInvalid(), propertyFile, propertyKey);
+                }
+            }
+            else {
+                return FormValidation.warning(Messages.ExtendedChoiceParameterDefinition_PropertyFileExistsButNoProvidedKey(), propertyFile);
+            }
+        }
+
+        public FormValidation doCheckPropertyKey(@QueryParameter final String propertyFile, @QueryParameter final String propertyKey,
+                                                 @QueryParameter final String type) throws IOException, ServletException {
+            return doCheckPropertyFile(propertyFile, propertyKey, type);
+        }
+
+        public FormValidation doCheckDefaultPropertyFile(@QueryParameter final String defaultPropertyFile,
+                                                         @QueryParameter final String defaultPropertyKey, @QueryParameter final String type) throws IOException, ServletException {
+            return doCheckPropertyFile(defaultPropertyFile, defaultPropertyKey, type);
+        }
+
+        public FormValidation doCheckDefaultPropertyKey(@QueryParameter final String defaultPropertyFile,
+                                                        @QueryParameter final String defaultPropertyKey, @QueryParameter final String type) throws IOException, ServletException {
+            return doCheckPropertyFile(defaultPropertyFile, defaultPropertyKey, type);
+        }
+
+        @Override
+        public ExtendedChoiceParameterDefinition newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+            ExtendedChoiceParameterDefinition def = new ExtendedChoiceParameterDefinition(
+                    formData.getString("name"),
+                    bindJSONWithDescriptor(req, formData, "choiceListProvider", ChoiceListProvider.class),
+                    formData.getString("description")
+            );
+
+            return def;
+        }
+
+        private <T extends Describable<?>> T bindJSONWithDescriptor(StaplerRequest req, JSONObject formData, String fieldName, Class<T> clazz) throws FormException {
+            formData = formData.getJSONObject(fieldName);
+
+            if (formData == null || formData.isNullObject()) {
+                return null;
+            }
+
+            String staplerClazzName = formData.optString("$class", null);
+            if (staplerClazzName == null) {
+                staplerClazzName = formData.optString("stapler-class", null);
+            }
+            if (staplerClazzName == null) {
+                throw new FormException("No $stapler nor stapler-class is specified", fieldName);
+            }
+            Jenkins jenkins = Jenkins.get();
+            if (jenkins == null) {
+                throw new IllegalStateException("Jenkins instance is unavailable.");
+            }
+            try {
+                @SuppressWarnings("unchecked")
+                Class<? extends T> staplerClass = (Class<? extends T>) jenkins.getPluginManager().uberClassLoader.loadClass(staplerClazzName);
+                Descriptor<?> d = jenkins.getDescriptorOrDie(staplerClass);
+
+                @SuppressWarnings("unchecked")
+                T instance = (T) d.newInstance(req, formData);
+                return instance;
+            } catch (ClassNotFoundException e) {
+                throw new FormException(String.format("Failed to instantiate %s", staplerClazzName), e, fieldName);
+            }
+        }// end bindJSONWithDescriptor()
+
+    }
+
 
     @DataBoundConstructor
     public ExtendedChoiceParameterDefinition(String name, ChoiceListProvider choiceListProvider, String description) {
@@ -448,7 +479,9 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     }
 
     // note that computeValue is not called by multiLevel.jelly
-    private String computeValue(String value, String propertyFilePath, String propertyKey, String groovyScript, String groovyScriptFile, String bindings, String groovyClasspath, boolean isSingleValued) {
+    private String computeValue(String value, String propertyFilePath, String propertyKey,
+                                String groovyScript, String groovyScriptFile, String bindings, String groovyClasspath,
+                                boolean isSingleValued) {
 
         if (!StringUtils.isBlank(propertyFilePath) && !StringUtils.isBlank(propertyKey)) {
             try {
@@ -648,6 +681,34 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
         return computeValue(descriptionPropertyValue, descriptionPropertyFile, descriptionPropertyKey, descriptionGroovyScript, descriptionGroovyScriptFile, descriptionBindings, descriptionGroovyClasspath, false);
     }
 
+    public ChoiceListProvider getChoiceListProvider() {
+        return choiceListProvider;
+    }
+
+    public ChoiceListProvider getEnabledChoiceListProvider() {
+        ChoiceListProvider p = getChoiceListProvider();
+        if (p == null) {
+            return null;
+        }
+
+        // filter providers.
+        List<Descriptor<ChoiceListProvider>> testList = DescriptorVisibilityFilter.apply(
+                getDescriptor(),
+                Arrays.asList(p.getDescriptor())
+        );
+        if (testList.isEmpty()) {
+            LOGGER.log(Level.WARNING, "{0} is configured but disabled in the system configuration.", p.getDescriptor().getDisplayName());
+            return null;
+        }
+        return p;
+    }
+
+    public List<String> getChoiceList() {
+        ChoiceListProvider provider = getEnabledChoiceListProvider();
+        List<String> choiceList = (provider != null) ? provider.getChoiceList() : null;
+        return (choiceList != null) ? choiceList : new ArrayList<>(0);
+    }
+
     @Override
     public String getType() {
         return type;
@@ -721,7 +782,7 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
         return columnIndicesForDropDowns;
     }
 
-    Map<String, Set<String>> calculateChoicesByDropdownId() throws Exception {
+    private Map<String, Set<String>> calculateChoicesByDropdownId() throws Exception {
         String resolvedPropertyFile = expandVariables(propertyFile);
         File file = new File(resolvedPropertyFile);
         List<String[]> fileLines = Collections.emptyList();
