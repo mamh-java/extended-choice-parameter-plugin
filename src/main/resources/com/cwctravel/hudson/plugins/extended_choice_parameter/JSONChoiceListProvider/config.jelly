@@ -12,10 +12,11 @@
         </j:when>
     </j:choose>
 
-    <f:radioBlock name="jsonParameterConfigSource" title="JSON Parameter Config Groovy Script" value="0"
-                  checked="${parameterType eq 'json' and not empty instance.groovyScript}">
+    <f:radioBlock name="jsonParameterConfigSource" title="Groovy Script" value="0"
+                  checked="${parameterType eq 'json' and not empty instance.groovyScript}"
+                  help="/plugin/extended-choice-parameter/help/help-jsonGroovyscriptSource.html">
 
-        <f:entry field="groovyScript">
+        <f:entry title="Groovy Script"  field="groovyScript">
             <f:textarea value="${instance.groovyScript}"/>
         </f:entry>
         <f:advanced>
@@ -29,10 +30,11 @@
 
     </f:radioBlock>
 
-    <f:radioBlock name="jsonParameterConfigSource" title="JSON Parameter Config Groovy Script File" value="1"
-                  checked="${parameterType eq 'json' and not empty instance.groovyScriptFile}">
+    <f:radioBlock name="jsonParameterConfigSource" title="Groovy File" value="1"
+                  checked="${parameterType eq 'json' and not empty instance.groovyScriptFile}"
+                  help="/plugin/extended-choice-parameter/help/help-jsonGroovyscriptSource.html">
 
-        <f:entry field="groovyScriptFile">
+        <f:entry title="Groovy File" field="groovyScriptFile">
             <f:textarea value="${instance.groovyScriptFile}"/>
         </f:entry>
         <f:advanced>
@@ -47,16 +49,18 @@
     </f:radioBlock>
 
 
-    <f:radioBlock name="jsonParameterConfigJavascriptSource" title="JSON Parameter Config Javascript" value="0"
-                  checked="${parameterType eq 'json' and not empty instance.javascript}">
-        <f:entry field="javascript">
+    <f:radioBlock name="jsonParameterConfigJavascriptSource" title="Javascript Code" value="0"
+                  checked="${parameterType eq 'json' and not empty instance.javascript}"
+                  help="/plugin/extended-choice-parameter/help/help-jsonJavascriptSource.html">
+        <f:entry title="Javascript Code" field="javascript">
             <f:textarea value="${instance.javascript}"/>
         </f:entry>
     </f:radioBlock>
 
-    <f:radioBlock name="jsonParameterConfigJavascriptSource" title="JSON Parameter Config Javascript File" value="1"
-                  checked="${parameterType eq 'json' and not empty instance.javascriptFile}">
-        <f:entry field="javascriptFile">
+    <f:radioBlock name="jsonParameterConfigJavascriptSource" title="Javascript File" value="1"
+                  checked="${parameterType eq 'json' and not empty instance.javascriptFile}"
+                  help="/plugin/extended-choice-parameter/help/help-jsonJavascriptSource.html">
+        <f:entry title="Javascript File" field="javascriptFile">
             <f:textbox value="${instance.javascriptFile}"/>
         </f:entry>
     </f:radioBlock>
