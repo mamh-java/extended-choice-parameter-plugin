@@ -1,0 +1,28 @@
+<div>
+    The properties file is like cvs file, each line is divided by tab.
+<pre>
+platform	branch	col3
+sdm845	sdm845_q_dev_bsui_20191119	1q,2q,3q
+sdm845	shark_mp_os_cts_20190823	1os,2os,3os,4os,5os,6os,7os
+sm8150	sm8150_mp_zero_20200109	1z,2z,3z,4z,5z
+sm8150	sm8150_p_dev_bsui_20181015	1p,2p,3p,4p,5p,6p,7p,8p,9p,0p
+sm8150	sm8150_q_dev_bsui_20190916	1q,2q,3q,4q,5q,6q,7q
+sm8150	sm8150_q_dev_os_20190916	1qo,2qo,3qo,4qo,5qo,6qo,7qo
+sm8150	sm8150_q_dev_eea_20190916	1eea,2eea,3eea,4eea,5eea,6eea,7eea,eea,8eea,9eea,0eea,ee
+</pre>
+    the property value config to the first line divided by "," like platform,branch,col3
+    <br><br>
+    This would result in a first drop down with the options "Select a platform...", "sdm845", "sm8150", "sm8250.
+    <br><br>
+    After the user selects a platform, a "branch" drop down would appear. If "sdm845" was chosen first, then
+    <br><br>
+    sdm845_q_dev_bsui_20191119 and shark_mp_os_cts_20190823 would be options,
+    <br><br>
+    but if "sm8150" was selected then instead "sm8150" platform and sm8150_mp_zero_20200109,sm8150_p_dev_bsui_20181015,sm8150_q_dev_bsui_20190916,sm8150_q_dev_os_20190916,sm8150_q_dev_eea_20190916 would be  options.
+    <br><br>
+    same for the col3, if user selects sdm845 and sdm845_q_dev_bsui_20191119 then  1q,2q,3q would be options
+    <br><br>
+    The properties file can be placed anywhere on the file-system that Jenkins can access.
+    <br>
+    like E:\work\extended-choice-parameter-plugin\param.prop
+</div>
