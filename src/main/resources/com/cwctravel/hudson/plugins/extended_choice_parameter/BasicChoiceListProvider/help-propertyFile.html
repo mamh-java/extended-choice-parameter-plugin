@@ -1,8 +1,10 @@
 <div>
-    The <a href="http://download.oracle.com/javase/6/docs/api/java/util/Properties.html">properties file</a>
-    is a collection of key,value pairs of the form key=value1,value2,...
+    使用属性文件来提供可以供用户选择的值
+    <br/><br/>
+    属性文件可以参考这里<a href="http://download.oracle.com/javase/6/docs/api/java/util/Properties.html">properties file</a>
+    属性文件是一组键值对的集合, 想这样 key=value1,value2,...
     <br><br>
-    Property files may reference other properties.  For example:
+    属性文件总可以引用其他属性的名称,例如下面,prop2的值引用了prop1的值, 这样prop2的值是a,b,c,d,e,f,g,h:
     <blockquote>
 prop1=a,b,c,d,e<br>
 prop2=${prop1},f,g,h
