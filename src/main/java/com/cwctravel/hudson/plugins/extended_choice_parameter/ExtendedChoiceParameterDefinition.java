@@ -371,7 +371,7 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
             String effectiveDescriptionPropertyValue = computeEffectiveDescriptionPropertyValue();
             if (!StringUtils.isBlank(effectiveDescriptionPropertyValue)) {
                 descriptionPropertyValueMap = new HashMap<String, String>();
-                String[] descriptionPropertyValues = StringUtils.split(effectiveDescriptionPropertyValue, ',');
+                String[] descriptionPropertyValues = StringUtils.split(effectiveDescriptionPropertyValue, multiSelectDelimiter);
                 for (int i = 0; i < values.length && i < descriptionPropertyValues.length; i++) {
                     descriptionPropertyValueMap.put(values[i], descriptionPropertyValues[i]);
                 }
@@ -666,11 +666,15 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     }
 
     private String computeEffectiveValue() {
-        return computeValue(value, propertyFile, propertyKey, groovyScript, groovyScriptFile, bindings, groovyClasspath, false);
+        return computeValue(value, propertyFile, propertyKey,
+                groovyScript, groovyScriptFile, bindings, groovyClasspath,
+                false);
     }
 
     private String computeEffectiveDefaultValue() {
-        return computeValue(defaultValue, defaultPropertyFile, defaultPropertyKey, defaultGroovyScript, defaultGroovyScriptFile, defaultBindings, defaultGroovyClasspath, isSingleValuedParameterType(type));
+        return computeValue(defaultValue, defaultPropertyFile, defaultPropertyKey,
+                defaultGroovyScript, defaultGroovyScriptFile, defaultBindings, defaultGroovyClasspath,
+                isSingleValuedParameterType(type));
     }
 
     private boolean isSingleValuedParameterType(String type) {
@@ -678,7 +682,9 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     }
 
     private String computeEffectiveDescriptionPropertyValue() {
-        return computeValue(descriptionPropertyValue, descriptionPropertyFile, descriptionPropertyKey, descriptionGroovyScript, descriptionGroovyScriptFile, descriptionBindings, descriptionGroovyClasspath, false);
+        return computeValue(descriptionPropertyValue, descriptionPropertyFile, descriptionPropertyKey,
+                descriptionGroovyScript, descriptionGroovyScriptFile, descriptionBindings, descriptionGroovyClasspath,
+                false);
     }
 
     public ChoiceListProvider getChoiceListProvider() {
