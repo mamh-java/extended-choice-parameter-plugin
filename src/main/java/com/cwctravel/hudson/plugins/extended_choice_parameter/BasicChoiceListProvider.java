@@ -48,34 +48,36 @@ public class BasicChoiceListProvider extends ChoiceListProvider {
         this.visibleItemCount = visibleItemCount;
         this.multiSelectDelimiter = multiSelectDelimiter;
         this.quoteValue = quoteValue;
-        this.propertyValue = propertySource.getPropertyValue();
-        this.value = propertySource.getPropertyValue();
-        this.propertyKey = propertySource.getPropertyKey();
-        this.propertyFile = propertySource.getPropertyFile();
 
-        this.groovyScript = propertySource.getGroovyScript();
-        this.groovyScriptFile = propertySource.getGroovyScriptFile();
-        this.bindings = propertySource.getBindings();
-        this.groovyClasspath = propertySource.getGroovyClasspath();
-
-
-        this.defaultPropertyValue = defaultPropertySource.getDefaultPropertyValue();
-        this.defaultValue = defaultPropertySource.getDefaultPropertyValue();
-        this.defaultPropertyKey = defaultPropertySource.getDefaultPropertyKey();
-        this.defaultPropertyFile = defaultPropertySource.getDefaultPropertyFile();
-        this.defaultGroovyScript = defaultPropertySource.getDefaultGroovyScript();
-        this.defaultGroovyScriptFile = defaultPropertySource.getDefaultGroovyScriptFile();
-        this.defaultBindings = defaultPropertySource.getDefaultBindings();
-        this.defaultGroovyClasspath = defaultPropertySource.getDefaultGroovyClasspath();
-
-
-        this.descriptionPropertyValue = descriptionPropertySource.getDescriptionPropertyValue();
-        this.descriptionPropertyKey = descriptionPropertySource.getDescriptionPropertyKey();
-        this.descriptionPropertyFile = descriptionPropertySource.getDescriptionPropertyFile();
-        this.descriptionGroovyScript = descriptionPropertySource.getDescriptionGroovyScript();
-        this.descriptionGroovyScriptFile = descriptionPropertySource.getDescriptionGroovyScriptFile();
-        this.descriptionBindings = descriptionPropertySource.getDescriptionBindings();
-        this.descriptionGroovyClasspath = descriptionPropertySource.getDescriptionGroovyClasspath();
+        if(propertySource!=null) {
+            this.propertyValue = propertySource.getPropertyValue();
+            this.value = propertySource.getPropertyValue();
+            this.propertyKey = propertySource.getPropertyKey();
+            this.propertyFile = propertySource.getPropertyFile();
+            this.groovyScript = propertySource.getGroovyScript();
+            this.groovyScriptFile = propertySource.getGroovyScriptFile();
+            this.bindings = propertySource.getBindings();
+            this.groovyClasspath = propertySource.getGroovyClasspath();
+        }
+        if (defaultPropertySource != null) {
+            this.defaultPropertyValue = defaultPropertySource.getDefaultPropertyValue();
+            this.defaultValue = defaultPropertySource.getDefaultPropertyValue();
+            this.defaultPropertyKey = defaultPropertySource.getDefaultPropertyKey();
+            this.defaultPropertyFile = defaultPropertySource.getDefaultPropertyFile();
+            this.defaultGroovyScript = defaultPropertySource.getDefaultGroovyScript();
+            this.defaultGroovyScriptFile = defaultPropertySource.getDefaultGroovyScriptFile();
+            this.defaultBindings = defaultPropertySource.getDefaultBindings();
+            this.defaultGroovyClasspath = defaultPropertySource.getDefaultGroovyClasspath();
+        }
+        if (descriptionPropertySource != null) {
+            this.descriptionPropertyValue = descriptionPropertySource.getDescriptionPropertyValue();
+            this.descriptionPropertyKey = descriptionPropertySource.getDescriptionPropertyKey();
+            this.descriptionPropertyFile = descriptionPropertySource.getDescriptionPropertyFile();
+            this.descriptionGroovyScript = descriptionPropertySource.getDescriptionGroovyScript();
+            this.descriptionGroovyScriptFile = descriptionPropertySource.getDescriptionGroovyScriptFile();
+            this.descriptionBindings = descriptionPropertySource.getDescriptionBindings();
+            this.descriptionGroovyClasspath = descriptionPropertySource.getDescriptionGroovyClasspath();
+        }
     }
 
 
