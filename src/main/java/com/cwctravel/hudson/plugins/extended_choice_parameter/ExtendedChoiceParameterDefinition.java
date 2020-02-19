@@ -352,32 +352,32 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     }
 
     private Map<String, Boolean> computeDefaultValueMap() {
-        Map<String, Boolean> defaultValueMap = null;
-        String effectiveDefaultValue = computeEffectiveDefaultValue();
-        if (!StringUtils.isBlank(effectiveDefaultValue)) {
-            defaultValueMap = new HashMap<String, Boolean>();
-            String[] defaultValues = StringUtils.split(effectiveDefaultValue, ',');
-            for (String value : defaultValues) {
-                defaultValueMap.put(StringUtils.trim(value), true);
+        Map<String, Boolean> defaultvMap = null;
+        String defaultv = computeEffectiveDefaultValue();// 计算出默认值, 字符串.
+        if (!StringUtils.isBlank(defaultv)) {
+            defaultvMap = new HashMap<>();
+            String[] valueA = StringUtils.split(defaultv, multiSelectDelimiter);
+            for (String v : valueA) {
+                defaultvMap.put(StringUtils.trim(v), true);
             }
         }
-        return defaultValueMap;
+        return defaultvMap;
     }
 
-    private Map<String, String> computeDescriptionPropertyValueMap(String effectiveValue) {
-        Map<String, String> descriptionPropertyValueMap = null;
+    private Map<String, String> computeDescriptionMap(String effectiveValue) {
+        Map<String, String> descMap = null;
         if (effectiveValue != null) {
-            String[] values = effectiveValue.split(",");
-            String effectiveDescriptionPropertyValue = computeEffectiveDescriptionPropertyValue();
-            if (!StringUtils.isBlank(effectiveDescriptionPropertyValue)) {
-                descriptionPropertyValueMap = new HashMap<String, String>();
-                String[] descriptionPropertyValues = StringUtils.split(effectiveDescriptionPropertyValue, multiSelectDelimiter);
-                for (int i = 0; i < values.length && i < descriptionPropertyValues.length; i++) {
-                    descriptionPropertyValueMap.put(values[i], descriptionPropertyValues[i]);
+            String[] values = StringUtils.split(effectiveValue, multiSelectDelimiter); // 分割 最后实际的 value
+            String desc = computeEffectiveDescription();
+            if (!StringUtils.isBlank(desc)) {
+                descMap = new HashMap<>();
+                String[] descA = StringUtils.split(desc, multiSelectDelimiter);
+                for (int i = 0; i < values.length && i < descA.length; i++) {
+                    descMap.put(values[i], descA[i]); // 每个value和每个description一一对应.
                 }
             }
         }
-        return descriptionPropertyValueMap;
+        return descMap;
     }
 
     @Override
@@ -457,11 +457,17 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     }
 
     private boolean isMultiLevelParameterType() {
-        return type.equals(PARAMETER_TYPE_MULTI_LEVEL_SINGLE_SELECT) || type.equals(PARAMETER_TYPE_MULTI_LEVEL_MULTI_SELECT);
+        return type.equals(PARAMETER_TYPE_MULTI_LEVEL_SINGLE_SELECT) ||
+                type.equals(PARAMETER_TYPE_MULTI_LEVEL_MULTI_SELECT);
     }
 
     private boolean isBasicParameterType() {
-        return type.equals(PARAMETER_TYPE_SINGLE_SELECT) || type.equals(PARAMETER_TYPE_MULTI_SELECT) || type.equals(PARAMETER_TYPE_CHECK_BOX) || type.equals(PARAMETER_TYPE_RADIO) || type.equals(PARAMETER_TYPE_TEXT_BOX) || type.equals(PARAMETER_TYPE_HIDDEN);
+        return type.equals(PARAMETER_TYPE_SINGLE_SELECT) ||
+                type.equals(PARAMETER_TYPE_MULTI_SELECT) ||
+                type.equals(PARAMETER_TYPE_CHECK_BOX) ||
+                type.equals(PARAMETER_TYPE_RADIO) ||
+                type.equals(PARAMETER_TYPE_TEXT_BOX) ||
+                type.equals(PARAMETER_TYPE_HIDDEN);
     }
 
     @Override
@@ -681,7 +687,7 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
         return PARAMETER_TYPE_RADIO.equals(type) || PARAMETER_TYPE_SINGLE_SELECT.equals(type);
     }
 
-    private String computeEffectiveDescriptionPropertyValue() {
+    private String computeEffectiveDescription() {
         return computeValue(descriptionPropertyValue, descriptionPropertyFile, descriptionPropertyKey,
                 descriptionGroovyScript, descriptionGroovyScriptFile, descriptionBindings, descriptionGroovyClasspath,
                 false);
@@ -1268,8 +1274,9 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 
         String effectiveValue = computeEffectiveValue();
         Map<String, Boolean> defaultValueMap = computeDefaultValueMap();
-        Map<String, String> descriptionPropertyValueMap = computeDescriptionPropertyValueMap(effectiveValue);
+        Map<String, String> descriptionPropertyValueMap = computeDescriptionMap(effectiveValue);
 
+        effectiveValue = effectiveValue.replace(multiSelectDelimiter, ","); // 最后在jelly中用的时候还要转换为逗号分割的字符串
         result.setEffectiveValue(effectiveValue);
         result.setDefaultValueMap(defaultValueMap);
         result.setDescriptionPropertyValueMap(descriptionPropertyValueMap);
