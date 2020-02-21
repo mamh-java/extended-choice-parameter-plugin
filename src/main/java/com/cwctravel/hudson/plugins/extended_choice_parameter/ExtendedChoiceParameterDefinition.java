@@ -6,6 +6,9 @@
 
 package com.cwctravel.hudson.plugins.extended_choice_parameter;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.opencsv.CSVReader;
 import groovy.lang.Binding;
 import groovy.lang.GroovyCodeSource;
@@ -356,7 +359,7 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
         String defaultv = computeEffectiveDefaultValue();// 计算出默认值, 字符串.
         if (!StringUtils.isBlank(defaultv)) {
             defaultvMap = new HashMap<>();
-            String[] valueA = StringUtils.split(defaultv, multiSelectDelimiter);
+            String[] valueA = Iterables.toArray(Splitter.on(multiSelectDelimiter).split(defaultv), String.class);
             for (String v : valueA) {
                 defaultvMap.put(StringUtils.trim(v), true);
             }
@@ -367,11 +370,11 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     private Map<String, String> computeDescriptionMap(String effectiveValue) {
         Map<String, String> descMap = null;
         if (effectiveValue != null) {
-            String[] values = StringUtils.split(effectiveValue, multiSelectDelimiter); // 分割 最后实际的 value
+            String[] values = Iterables.toArray(Splitter.on(multiSelectDelimiter).split(effectiveValue), String.class); // 分割 最后实际的 value
             String desc = computeEffectiveDescription();
             if (!StringUtils.isBlank(desc)) {
                 descMap = new HashMap<>();
-                String[] descA = StringUtils.split(desc, multiSelectDelimiter);
+                String[] descA = Iterables.toArray(Splitter.on(multiSelectDelimiter).split(desc), String.class);
                 for (int i = 0; i < values.length && i < descA.length; i++) {
                     descMap.put(values[i], descA[i]); // 每个value和每个description一一对应.
                 }
@@ -402,20 +405,14 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
             String valueStr = computeEffectiveValue();
             if (valueStr != null) {
                 List<String> result = new ArrayList<>();
-
-                String[] values = valueStr.split(",");
-                Set<String> valueSet = new HashSet<>();
-                for (String value : values) {
-                    valueSet.add(value);
-                }
-
+                Set<String> valueSet = Sets.newHashSet(Splitter.on(multiSelectDelimiter).split(valueStr));
                 for (String requestValue : requestValues) {
                     if (valueSet.contains(requestValue)) {
                         result.add(requestValue);
                     }
                 }
 
-                return new ExtendedChoiceParameterValue(getName(), StringUtils.join(result, getMultiSelectDelimiter()));
+                return new ExtendedChoiceParameterValue(getName(), StringUtils.join(result, multiSelectDelimiter));
             }
         }
         return null;
