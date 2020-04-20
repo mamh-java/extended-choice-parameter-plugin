@@ -1,0 +1,76 @@
+<!--
+ Copyright (c) 2013 Costco, Vimil Saju
+ See the file license.txt for copying permission. 
+-->
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+         xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form"
+         xmlns:i="jelly:fmt" xmlns:p="/lib/hudson/project" >
+
+    <j:choose>
+        <j:when test="${instance.type eq 'PT_SINGLE_SELECT' or instance.type eq 'PT_MULTI_SELECT' or instance.type eq 'PT_RADIO' or instance.type eq 'PT_CHECKBOX' or instance.type eq 'PT_TEXTBOX' or instance.type eq 'PT_HIDDEN'}">
+            <j:set var="parameterType" value="basic"/>
+        </j:when>
+    </j:choose>
+
+    <f:entry title="Parameter Type" field="type">
+        <select name="type">
+            <j:choose>
+                <j:when test="${instance.type eq 'PT_SINGLE_SELECT'}">
+                    <option value="PT_SINGLE_SELECT" selected="selected">Single Select</option>
+                </j:when>
+                <j:otherwise>
+                    <option value="PT_SINGLE_SELECT">Single Select</option>
+                </j:otherwise>
+            </j:choose>
+            <j:choose>
+                <j:when test="${instance.type eq 'PT_MULTI_SELECT'}">
+                    <option value="PT_MULTI_SELECT" selected="selected">Multi Select</option>
+                </j:when>
+                <j:otherwise>
+                    <option value="PT_MULTI_SELECT">Multi Select</option>
+                </j:otherwise>
+            </j:choose>
+            <j:choose>
+                <j:when test="${instance.type eq 'PT_RADIO'}">
+                    <option value="PT_RADIO" selected="selected">Radio Buttons</option>
+                </j:when>
+                <j:otherwise>
+                    <option value="PT_RADIO">Radio Buttons</option>
+                </j:otherwise>
+            </j:choose>
+            <j:choose>
+                <j:when test="${instance.type eq 'PT_CHECKBOX'}">
+                    <option value="PT_CHECKBOX" selected="selected">Check Boxes</option>
+                </j:when>
+                <j:otherwise>
+                    <option value="PT_CHECKBOX">Check Boxes</option>
+                </j:otherwise>
+            </j:choose>
+            <j:choose>
+                <j:when test="${instance.type eq 'PT_RANDOM_SELECT'}">
+                    <option value="PT_RANDOM_SELECT" selected="selected">Random Select</option>
+                </j:when>
+                <j:otherwise>
+                    <option value="PT_RANDOM_SELECT">Random Select</option>
+                </j:otherwise>
+            </j:choose>
+
+        </select>
+    </f:entry>
+
+
+    <f:entry title="Number of Visible Items" field="visibleItemCount">
+        <f:textbox value="${visibleItemCount}"/>
+    </f:entry>
+
+    <f:entry title="Delimiter" field="multiSelectDelimiter">
+        <f:textbox value="${multiSelectDelimiter}"/>
+    </f:entry>
+
+    <f:entry title="${%Projects}" field="projects">
+        <f:textbox autoCompleteDelimChar="," />
+    </f:entry>
+
+
+</j:jelly>
