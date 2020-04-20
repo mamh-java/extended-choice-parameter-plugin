@@ -81,6 +81,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -95,6 +96,8 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     public static final String PARAMETER_TYPE_SINGLE_SELECT = "PT_SINGLE_SELECT";
 
     public static final String PARAMETER_TYPE_MULTI_SELECT = "PT_MULTI_SELECT";
+
+    public static final String PARAMETER_TYPE_RANDOM_SELECT = "PT_RANDOM_SELECT"; //随机选择
 
     public static final String PARAMETER_TYPE_CHECK_BOX = "PT_CHECKBOX";
 
@@ -186,7 +189,7 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 
         public FormValidation doCheckPropertyFile(@QueryParameter final String propertyFile, @QueryParameter final String propertyKey,
                                                   @QueryParameter final String type) throws IOException, ServletException {
-            if(StringUtils.isBlank(propertyFile)) {
+            if (StringUtils.isBlank(propertyFile)) {
                 return FormValidation.ok();
             }
 
@@ -196,34 +199,28 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 
             File prop = new File(propertyFile);
             try {
-                if(prop.exists()) {
+                if (prop.exists()) {
                     property.setFile(prop);
-                }
-                else {
+                } else {
                     URL propertyFileUrl = new URL(propertyFile);
                     property.setUrl(propertyFileUrl);
                 }
                 property.execute();
-            }
-            catch(MalformedURLException e) {
+            } catch (MalformedURLException e) {
                 return FormValidation.warning(Messages.ExtendedChoiceParameterDefinition_PropertyFileDoesntExist(), propertyFile);
-            }
-            catch(BuildException e) {
+            } catch (BuildException e) {
                 return FormValidation.warning(Messages.ExtendedChoiceParameterDefinition_PropertyFileDoesntExist(), propertyFile);
             }
 
-            if(PARAMETER_TYPE_MULTI_LEVEL_SINGLE_SELECT.equals(type) || PARAMETER_TYPE_MULTI_LEVEL_MULTI_SELECT.equals(type)) {
+            if (PARAMETER_TYPE_MULTI_LEVEL_SINGLE_SELECT.equals(type) || PARAMETER_TYPE_MULTI_LEVEL_MULTI_SELECT.equals(type)) {
                 return FormValidation.ok();
-            }
-            else if(StringUtils.isNotBlank(propertyKey)) {
-                if(project.getProperty(propertyKey) != null) {
+            } else if (StringUtils.isNotBlank(propertyKey)) {
+                if (project.getProperty(propertyKey) != null) {
                     return FormValidation.ok();
-                }
-                else {
+                } else {
                     return FormValidation.warning(Messages.ExtendedChoiceParameterDefinition_PropertyFileExistsButProvidedKeyIsInvalid(), propertyFile, propertyKey);
                 }
-            }
-            else {
+            } else {
                 return FormValidation.warning(Messages.ExtendedChoiceParameterDefinition_PropertyFileExistsButNoProvidedKey(), propertyFile);
             }
         }
@@ -346,10 +343,27 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
             this.javascript = p.getJavascript();
             this.javascriptFile = p.getJavascriptFile();
             this.saveJSONParameterToFile = p.isSaveJSONParameterToFile();
+        } else if (choiceListProvider instanceof JobChoiceListProvider) {
+            JobChoiceListProvider p = (JobChoiceListProvider) choiceListProvider;
+            this.type = p.getType(); //Parameter Type
+            this.visibleItemCount = p.getVisibleItemCount();
+            this.multiSelectDelimiter = p.getMultiSelectDelimiter(); //Delimiter
+
+            if (visibleItemCount == 0) {
+                visibleItemCount = 1;
+            }
+
+            if (multiSelectDelimiter == null || "".equals(multiSelectDelimiter)) {
+                multiSelectDelimiter = ",";
+            }
+
+            this.value = p.getProjects(); // 可以选的alue
+
+            this.defaultValue = p.getProjects(); //默认被选中的alue
         }
 
         AbstractProject<?, ?> project = Stapler.getCurrentRequest().findAncestorObject(AbstractProject.class);
-        if(project != null) {
+        if (project != null) {
             projectName = project.getName();
         }
     }
@@ -385,6 +399,7 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 
     @Override
     public ParameterValue createValue(StaplerRequest request) {
+        // 使用 curl 命令触发编译会调到这里
         String[] requestValues = request.getParameterValues(getName());
         return createValue(requestValues);
     }
@@ -395,35 +410,18 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
         return createValue(requestValues);
     }
 
-    private ParameterValue createValue(String[] requestValues) {
-        if (requestValues == null || requestValues.length == 0) {
-            return getDefaultParameterValue();
-        }
-        if (PARAMETER_TYPE_TEXT_BOX.equals(type) || PARAMETER_TYPE_HIDDEN.equals(type)) {
-            return new ExtendedChoiceParameterValue(getName(), requestValues[0]);
-        } else {
-            String valueStr = computeEffectiveValue();
-            if (valueStr != null) {
-                List<String> result = new ArrayList<>();
-                Set<String> valueSet = Sets.newHashSet(Splitter.on(multiSelectDelimiter).split(valueStr));
-                for (String requestValue : requestValues) {
-                    if (valueSet.contains(requestValue)) {
-                        result.add(requestValue);
-                    }
-                }
-
-                return new ExtendedChoiceParameterValue(getName(), StringUtils.join(result, multiSelectDelimiter));
-            }
-        }
-        return null;
-    }
-
     @Override
     public ParameterValue createValue(StaplerRequest request, JSONObject jO) {
+        // 这个方法就是在jenkins 的job上 点击  Build with Parameters 时候会调用到这个方法里面.
         Object value = jO.get("value");
         String strValue = "";
         if (value instanceof String) {
-            strValue = (String) value;
+            if (PARAMETER_TYPE_RANDOM_SELECT.equals(type)){
+                // 随机 的
+                return getDefaultParameterValue();
+            }else {
+                strValue = (String) value;
+            }
         } else if (value instanceof JSONArray) {
             StringBuilder sB = new StringBuilder();
             JSONArray jsonValues = (JSONArray) value;
@@ -453,6 +451,29 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
         return new ExtendedChoiceParameterValue(getName(), strValue);
     }
 
+    private ParameterValue createValue(String[] requestValues) {
+        if (requestValues == null || requestValues.length == 0) {
+            return getDefaultParameterValue();
+        }
+        if (PARAMETER_TYPE_TEXT_BOX.equals(type) || PARAMETER_TYPE_HIDDEN.equals(type)) {
+            return new ExtendedChoiceParameterValue(getName(), requestValues[0]);
+        } else {
+            String valueStr = computeEffectiveValue();
+            if (valueStr != null) {
+                List<String> result = new ArrayList<>();
+                Set<String> valueSet = Sets.newHashSet(Splitter.on(multiSelectDelimiter).split(valueStr));
+                for (String requestValue : requestValues) {
+                    if (valueSet.contains(requestValue)) {
+                        result.add(requestValue);
+                    }
+                }
+
+                return new ExtendedChoiceParameterValue(getName(), StringUtils.join(result, multiSelectDelimiter));
+            }
+        }
+        return null;
+    }
+
     private boolean isMultiLevelParameterType() {
         return type.equals(PARAMETER_TYPE_MULTI_LEVEL_SINGLE_SELECT) ||
                 type.equals(PARAMETER_TYPE_MULTI_LEVEL_MULTI_SELECT);
@@ -467,6 +488,10 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
                 type.equals(PARAMETER_TYPE_HIDDEN);
     }
 
+    private boolean isJobParameterType() {
+        return type.equals(PARAMETER_TYPE_RANDOM_SELECT);
+    }
+
     @Override
     public ParameterValue getDefaultParameterValue() {
         if (isBasicParameterType()) {
@@ -478,14 +503,17 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
                 return new ExtendedChoiceParameterValue(getName(), defaultValue);
             }
         }
+        if (isJobParameterType()) {
+            String defaultValue = computeEffectiveDefaultValue();
+            if (!StringUtils.isBlank(defaultValue)) {
+                return new ExtendedChoiceParameterValue(getName(), defaultValue);
+            }
+        }
         return super.getDefaultParameterValue();
     }
 
     // note that computeValue is not called by multiLevel.jelly
-    private String computeValue(String value, String propertyFilePath, String propertyKey,
-                                String groovyScript, String groovyScriptFile, String bindings, String groovyClasspath,
-                                boolean isSingleValued) {
-
+    private String computeValue(String value, String propertyFilePath, String propertyKey, String groovyScript, String groovyScriptFile, String bindings, String groovyClasspath, boolean isSingleValued) {
         if (!StringUtils.isBlank(propertyFilePath) && !StringUtils.isBlank(propertyKey)) {
             try {
                 String resolvedPropertyFilePath = expandVariables(propertyFilePath);
@@ -514,6 +542,12 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
         } else if (!StringUtils.isBlank(groovyScriptFile)) {
             return executeGroovyScriptFile(groovyScriptFile, bindings, groovyClasspath, isSingleValued);
         } else if (!StringUtils.isBlank(value)) {
+            if (PARAMETER_TYPE_RANDOM_SELECT.equals(type)){
+                // 随机 的
+                String[] values = value.split(",");
+                Random random = new Random();
+                value = values[random.nextInt(values.length -1)];
+            }
             return value;
         }
         return null;
@@ -669,15 +703,12 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     }
 
     private String computeEffectiveValue() {
-        return computeValue(value, propertyFile, propertyKey,
-                groovyScript, groovyScriptFile, bindings, groovyClasspath,
-                false);
+        return computeValue(value, propertyFile, propertyKey, groovyScript, groovyScriptFile, bindings, groovyClasspath, false);
     }
 
     private String computeEffectiveDefaultValue() {
-        return computeValue(defaultValue, defaultPropertyFile, defaultPropertyKey,
-                defaultGroovyScript, defaultGroovyScriptFile, defaultBindings, defaultGroovyClasspath,
-                isSingleValuedParameterType(type));
+        // 计算 effectiveDefaultValue 的值
+        return computeValue(defaultValue, defaultPropertyFile, defaultPropertyKey, defaultGroovyScript, defaultGroovyScriptFile, defaultBindings, defaultGroovyClasspath, isSingleValuedParameterType(type));
     }
 
     private boolean isSingleValuedParameterType(String type) {
@@ -685,9 +716,8 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
     }
 
     private String computeEffectiveDescription() {
-        return computeValue(descriptionPropertyValue, descriptionPropertyFile, descriptionPropertyKey,
-                descriptionGroovyScript, descriptionGroovyScriptFile, descriptionBindings, descriptionGroovyClasspath,
-                false);
+        // 计算 effectiveDescription 的值
+        return computeValue(descriptionPropertyValue, descriptionPropertyFile, descriptionPropertyKey, descriptionGroovyScript, descriptionGroovyScriptFile, descriptionBindings, descriptionGroovyClasspath, false);
     }
 
     public ChoiceListProvider getChoiceListProvider() {
@@ -873,18 +903,6 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 
         return dropdownIdsBuilder.toString();
 
-        /* dropdownIds is of a form like this:
-        return name + " dropdown MultiLevelMultiSelect 0,"
-                   // next select the source of the genome -- each genome gets a separate dropdown id:"
-                 + name + " dropdown MultiLevelMultiSelect 0 HG18,dropdown MultiLevelMultiSelect 0 ZZ23,"
-                 // next select the cell type of the source -- each source gets a separate dropdown id
-                 + name + " dropdown MultiLevelMultiSelect 0 HG18 Diffuse large B-cell lymphoma, dropdown MultiLevelMultiSelect 0 HG18 Multiple Myeloma,"
-                 + name + " dropdown MultiLevelMultiSelect 0 ZZ23 Neuroblastoma,"
-                 // next select the name from the cell type -- each cell type gets a separate dropdown id
-                 + name + " dropdown MultiLevelMultiSelect 0 HG18 Diffuse large B-cell lymphoma LY1,"
-                 + name + " dropdown MultiLevelMultiSelect 0 HG18 Multiple Myeloma MM1S,"
-                 + name + " dropdown MultiLevelMultiSelect 0 ZZ23 Neuroblastoma BE2C,"
-                 + name + " dropdown MultiLevelMultiSelect 0 ZZ23 Neuroblastoma SKNAS";*/
     }
 
     public Map<String, String> getChoicesByDropdownId() throws Exception {
@@ -903,19 +921,6 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 
             collapsedMap.put(dropdownIdEntry.getKey(), choicesBuilder.toString());
         }
-
-        /* collapsedMap is of a form like this:
-        collapsedMap.put(name + " dropdown MultiLevelMultiSelect 0", "Select a genome...,HG18,ZZ23");
-        collapsedMap.put(name + " dropdown MultiLevelMultiSelect 0 HG18", "Select a source...,Diffuse large B-cell lymphoma,Multiple Myeloma");
-        collapsedMap.put(name + " dropdown MultiLevelMultiSelect 0 ZZ23", "Select a source...,Neuroblastoma");
-        collapsedMap.put(name + " dropdown MultiLevelMultiSelect 0 HG18 Diffuse large B-cell lymphoma","Select a cell type...,LY1");
-        collapsedMap.put(name + " dropdown MultiLevelMultiSelect 0 HG18 Multiple Myeloma","Select a cell type...,MM1S");
-        collapsedMap.put(name + " dropdown MultiLevelMultiSelect 0 ZZ23 Neuroblastoma","Select a cell type...,BE2C,SKNAS");
-        collapsedMap.put(name + " dropdown MultiLevelMultiSelect 0 HG18 Diffuse large B-cell lymphoma LY1","Select a name...,LY1_BCL6_DMSO,LY1_BCL6_JQ1");
-        collapsedMap.put(name + " dropdown MultiLevelMultiSelect 0 HG18 Multiple Myeloma MM1S", "Select a name...,MM1S_BRD4_150nM_JQ1,MM1S_BRD4_500nM_JQ1");
-        collapsedMap.put(name + " dropdown MultiLevelMultiSelect 0 ZZ23 Neuroblastoma BE2C", "Select a name...,BE2C_BRD4");
-        collapsedMap.put(name + " dropdown MultiLevelMultiSelect 0 ZZ23 Neuroblastoma SKNAS", "Select a name...,SKNAS_H3K4ME3");
-        */
 
         return collapsedMap;
     }
