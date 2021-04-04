@@ -11,12 +11,11 @@
     <packaging>hpi</packaging>
     <version>0.83-SNAPSHOT</version>
     <name>Extended Choice Parameter Plug-In</name>
-    <url>https://github.com/jenkinsci/extended-choice-parameter-plugin</url>
+    <url>https://github.com/mamh-java/extended-choice-parameter-plugin</url>
 
     <properties>
-        <!--jenkins-core.version>2.127-20180610.103314-1</jenkins-core.version>
-        <jenkins-war.version>2.127-20180610.103343-1</jenkins-war.version-->
-        <jenkins.version>2.176.1</jenkins.version>
+        <jenkins.version>2.249.3</jenkins.version>
+        <slf4jVersion>1.7.26</slf4jVersion>
         <java.level>8</java.level>
     </properties>
 
@@ -24,6 +23,10 @@
         <developer>
             <id>vimil</id>
             <name>Vimil Saju</name>
+        </developer>
+        <developer>
+            <id>bright.ma</id>
+            <name>bright ma</name>
         </developer>
     </developers>
 
@@ -60,9 +63,9 @@
     </pluginRepositories>
 
     <scm>
-        <connection>scm:git:ssh://git@github.com/jenkinsci/extended-choice-parameter-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/extended-choice-parameter-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/extended-choice-parameter-plugin</url>
-        <tag>extended-choice-parameter-0.66</tag>
+        <connection>scm:git:https://github.com/mamh-java/extended-choice-parameter-plugin.git</connection>
+        <developerConnection>scm:git:https://github.com/mamh-java/extended-choice-parameter-plugin.git</developerConnection>
+        <url>https://github.com/mamh-java/extended-choice-parameter-plugin</url>
+        <tag>HEAD</tag>
     </scm>
 </project>
