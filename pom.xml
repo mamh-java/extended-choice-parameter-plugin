@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.47</version>
+        <version>4.74</version>
     </parent>
 
     <artifactId>extended-choice-parameter</artifactId>
@@ -14,9 +14,8 @@
     <url>https://github.com/mamh-java/extended-choice-parameter-plugin</url>
 
     <properties>
-        <jenkins.version>2.249.3</jenkins.version>
-        <slf4jVersion>1.7.26</slf4jVersion>
-        <java.level>8</java.level>
+        <jenkins.version>2.361.2</jenkins.version>
+        <java.level>11</java.level>
     </properties>
 
     <developers>
@@ -44,7 +43,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>script-security</artifactId>
-            <version>1.19</version>
+            <version>1175.v4b_d517d6db_f0</version>
         </dependency>
     </dependencies>
 
