@@ -376,7 +376,7 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
                 descMap = new HashMap<>();
                 String[] descA = Iterables.toArray(Splitter.on(multiSelectDelimiter).split(desc), String.class);
                 for (int i = 0; i < values.length && i < descA.length; i++) {
-                    descMap.put(values[i], descA[i]); // 每个value和每个description一一对应.
+                    descMap.put(StringUtils.trim(values[i]), StringUtils.trim(descA[i])); // 每个value和每个description一一对应.
                 }
             }
         }
