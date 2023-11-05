@@ -9,7 +9,7 @@
 
     <artifactId>extended-choice-parameter</artifactId>
     <packaging>hpi</packaging>
-    <version>0.83</version>
+    <version>0.84-SNAPSHOT</version>
     <name>Extended Choice Parameter Plugin</name>
     <url>https://github.com/mamh-java/extended-choice-parameter-plugin</url>
 
